@@ -1,36 +1,32 @@
+// App.jsx
 import MainLayout from "./layouts/MainLayout";
 import Home from "./pages/Home";
 import PremiumQuestions from "./pages/PremiumQuestions";
-import { Routes, Route, useLocation } from "react-router";
+import { Routes, Route } from "react-router";
 import UploadQuestion from "./pages/UploadQuestion";
 import Auth from "./pages/Auth";
-
+import AdminPanel from "./pages/AdminPanel"
 import PremiumSearch from "./pages/PremiumSearch";
 import FloatingScreenshotButton from "./components/FloatingScreenshotButton";
-import AdminPanel from "./pages/Adminpanel";
+import { AuthProvider } from "./contexts/AuthContext";
+import Profile from "./pages/Profile";
 
 function App() {
-  const location = useLocation();
-  
-  // Check if current page is home or premium search
-  const isHomeOrPremiumSearch = location.pathname === '/' || location.pathname === '/premium';
-  
   return (
-    <>
+    <AuthProvider>
       <Routes>
         <Route path='/' element={<MainLayout />}>
           <Route path="/" element={<Home />} />
           <Route path="/premium" element={<PremiumSearch />} />
           <Route path="/upload" element={<UploadQuestion />} />
           <Route path="/user" element={<Auth />} />
-          <Route path="/admin" element={<AdminPanel />} />
-          
+          <Route path="/profile" element={<Profile/>}/>
+          <Route path="/admin" element={<AdminPanel/>} />
+          <Route path="/premium/search" element={<PremiumQuestions />} />
         </Route>
       </Routes>
-      
-      {/* Floating button - only shows on home and premium search pages */}
-      {isHomeOrPremiumSearch && <FloatingScreenshotButton />}
-    </>
+      <FloatingScreenshotButton />
+    </AuthProvider>
   );
 }
 

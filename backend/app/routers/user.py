@@ -24,3 +24,19 @@ async def login_user(body: UserLoginSchema, db: Session = Depends(get_db)):
 @router.get('/is_auth', status_code=status.HTTP_200_OK, response_model=UserResponseSchema)
 async def is_auth(request: Request, db: Session = Depends(get_db)):
     return is_authenticated(request, db)
+
+
+@router.get("/me")
+async def get_current_user(
+    db: Session = Depends(get_db),
+    user: UserSchema = Depends(is_authenticated)
+):
+    """Get current user information"""
+    return {
+        "id": user.id,
+        "username": user.username,
+        "email": user.email,
+        "mobile": user.mobile,
+        "coins": user.coins,
+        "created_at": user.created_at
+    }
