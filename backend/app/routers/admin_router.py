@@ -17,6 +17,7 @@ from app.models.models import (
 from app.dependencies import get_db
 from app.schemas.schemas import UserSchema
 from app.controllers.controllers import is_authenticated
+from datetime import timedelta
 
 # Use a secret, hard-to-guess prefix
 ADMIN_SECRET = "x7k9m2p4q8w5v3n1"  # Change this to something random!
@@ -128,13 +129,58 @@ async def get_pending_questions(
         "questions": result
     }
 
+# @router.post("/questions/{question_id}/approve")
+# async def approve_question(
+#     question_id: int,
+#     db: Session = Depends(get_db),
+#     user: UserSchema = Depends(is_authenticated)
+# ):
+#     """Approve a pending question"""
+#     verify_admin(user)
+    
+#     question = db.query(Question).filter(Question.id == question_id).first()
+#     if not question:
+#         raise HTTPException(status_code=404, detail="Question not found")
+    
+#     if question.status != "pending":
+#         raise HTTPException(status_code=400, detail="Question is not pending")
+    
+#     question.status = "approved"
+#     db.commit()
+    
+#     return {"message": "Question approved successfully", "question_id": question_id}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 @router.post("/questions/{question_id}/approve")
 async def approve_question(
     question_id: int,
     db: Session = Depends(get_db),
     user: UserSchema = Depends(is_authenticated)
 ):
-    """Approve a pending question"""
+    """Approve a pending question and reward the uploader"""
     verify_admin(user)
     
     question = db.query(Question).filter(Question.id == question_id).first()
@@ -144,10 +190,76 @@ async def approve_question(
     if question.status != "pending":
         raise HTTPException(status_code=400, detail="Question is not pending")
     
+    # Get the uploader (user who submitted the question)
+    uploader = db.query(UserModel).filter(UserModel.id == question.uploaded_by).first()
+    if not uploader:
+        raise HTTPException(status_code=404, detail="Uploader not found")
+    
+    # Calculate reward based on exam type
+    reward_coins = 0
+    exam_type_lower = question.exam_type.lower()
+    
+    if exam_type_lower == "quiz":
+        reward_coins = 5
+    elif exam_type_lower == "mid":
+        reward_coins = 10
+    elif exam_type_lower == "final":
+        reward_coins = 15
+    else:
+        # Default reward if exam type doesn't match
+        reward_coins = 5
+    
+    # Add coins to uploader's account
+    uploader.coins += reward_coins
+    expiry_date = datetime.now() + timedelta(days=356)
+    coin_package = UserCoinPackage(
+            user_id=uploader.id,
+            package_amount=reward_coins,
+            coins_received=reward_coins,
+            coins_remaining=reward_coins,
+            expiry_date=expiry_date,
+            is_active=True
+        )
+    db.add(coin_package)
+    
+    # Create coin transaction record for the reward
+    transaction = CoinTransaction(
+        user_id=uploader.id,
+        amount=reward_coins,
+        transaction_type="reward",
+        description=f"Reward for approved {question.exam_type} question (ID: {question_id})"
+    )
+    db.add(transaction)
+    
+    # Update question status
     question.status = "approved"
+    
     db.commit()
     
-    return {"message": "Question approved successfully", "question_id": question_id}
+    return {
+        "message": "Question approved successfully",
+        "question_id": question_id,
+        "reward": {
+            "coins_awarded": reward_coins,
+            "exam_type": question.exam_type,
+            "uploader_username": uploader.username,
+            "total_coins": uploader.coins
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 @router.post("/questions/{question_id}/reject")
 async def reject_question(
@@ -201,105 +313,484 @@ async def delete_question(
 
 # ==================== BULK UPLOAD ====================
 
+# Add this to your router file - replace the existing bulk-upload endpoint
+
 @router.post("/bulk-upload")
 async def bulk_upload_questions(
     files: List[UploadFile] = File(...),
-    auto_approve: bool = Form(False),
     db: Session = Depends(get_db),
     user: UserSchema = Depends(is_authenticated)
 ):
     """
     Bulk upload questions from images.
-    Expected filename format: university_subject_course_year_semester_examtype_number.extension
-    Example: DU_Physics_Phy101_2023_1_Final_1.png
+    Expected filename format: university_subject_course_year_semester_examtype_pagenumber.extension
+    Example: HSTU_ECE_Digital Communication_2025_5_1.jpg
+    Multiple pages: HSTU_ECE_Digital Communication_2025_5_1.jpg, HSTU_ECE_Digital Communication_2025_5_2.jpg
+    
+    Duplicate detection: Skips questions that already exist in the database.
     """
+    # Verify admin
     verify_admin(user)
     
-    results = []
+    # Validate file count
+    if len(files) > 100:
+        return JSONResponse(
+            status_code=400,
+            content={
+                "error": "Maximum 100 files allowed per bulk upload",
+                "total": len(files)
+            }
+        )
+    
+    # Group files by question identifier (without page number)
+    question_groups = {}
+    invalid_files = []
     
     for file in files:
-        try:
-            # Parse filename without extension
-            name_without_ext = os.path.splitext(file.filename)[0]
-            parts = name_without_ext.split('_')
-            
-            # Validate format: university_subject_course_year_semester_examtype_number
-            if len(parts) < 7:
-                results.append({
+        # Validate file type
+        allowed_extensions = ['.png', '.jpg', '.jpeg', '.webp']
+        _, ext = os.path.splitext(file.filename)
+        if ext.lower() not in allowed_extensions:
+            invalid_files.append({
+                "file": file.filename,
+                "message": f"Unsupported file type. Allowed: {', '.join(allowed_extensions)}"
+            })
+            continue
+        
+        # Validate file size (max 10MB)
+        file_size = 0
+        chunk_size = 1024 * 1024  # 1MB chunks
+        temp_content = b''
+        while chunk := await file.read(chunk_size):
+            temp_content += chunk
+            file_size += len(chunk)
+            if file_size > 10 * 1024 * 1024:  # 10MB
+                invalid_files.append({
                     "file": file.filename,
+                    "message": "File size exceeds 10MB limit"
+                })
+                break
+        
+        if file_size > 10 * 1024 * 1024:
+            continue
+        
+        # Reset file pointer for later reading
+        await file.seek(0)
+        
+        # Parse filename without extension
+        name_without_ext = os.path.splitext(file.filename)[0]
+        parts = name_without_ext.split('_')
+        
+        # Validate format: university_subject_course_year_semester_examtype_pagenumber
+        if len(parts) < 7:
+            invalid_files.append({
+                "file": file.filename,
+                "message": "Invalid format. Expected: university_subject_course_year_semester_examtype_pagenumber"
+            })
+            continue
+        
+        # Extract parts (from the end)
+        page_number = parts.pop()
+        exam_type = parts.pop()
+        semester = parts.pop()
+        year = parts.pop()
+        course = parts.pop()
+        subject = parts.pop()
+        university = '_'.join(parts)
+        
+        # Validate year
+        if not year.isdigit() or int(year) < 1900 or int(year) > 2100:
+            invalid_files.append({
+                "file": file.filename,
+                "message": f"Invalid year: {year}"
+            })
+            continue
+        
+        # Validate page number
+        if not page_number.isdigit() or int(page_number) < 1:
+            invalid_files.append({
+                "file": file.filename,
+                "message": f"Invalid page number: {page_number}. Must be a positive integer."
+            })
+            continue
+        
+        # Create question identifier (without page number)
+        question_id = f"{university}_{subject}_{course}_{year}_{semester}_{exam_type}"
+        
+        if question_id not in question_groups:
+            question_groups[question_id] = {
+                "university": university,
+                "subject": subject,
+                "course": course,
+                "year": year,
+                "semester": semester,
+                "exam_type": exam_type,
+                "pages": [],
+                "files": []
+            }
+        
+        question_groups[question_id]["pages"].append(int(page_number))
+        question_groups[question_id]["files"].append(file)
+    
+    results = []
+    created_questions = []
+    skipped_duplicates = []
+    
+    # First, check for duplicates in the database
+    for question_id, group in question_groups.items():
+        # Check if question already exists in database
+        existing_question = db.query(Question).filter(
+            Question.university == group["university"],
+            Question.subject == group["subject"],
+            Question.course == group["course"],
+            Question.year == int(group["year"]),
+            Question.semester == group["semester"],
+            Question.exam_type == group["exam_type"]
+        ).first()
+        
+        if existing_question:
+            # Check if it has the same number of pages
+            existing_page_count = len(existing_question.images)
+            new_page_count = len(group["files"])
+            
+            if existing_page_count == new_page_count:
+                # Same question with same number of pages - mark as duplicate
+                skipped_duplicates.append({
+                    "question": question_id,
+                    "existing_id": existing_question.id,
+                    "message": f"Duplicate question already exists with ID: {existing_question.id} ({existing_page_count} pages)"
+                })
+            else:
+                # Same question but different number of pages - could be updated or error
+                skipped_duplicates.append({
+                    "question": question_id,
+                    "existing_id": existing_question.id,
+                    "message": f"Question exists with different page count. Existing: {existing_page_count}, New: {new_page_count}. Skipping to avoid inconsistency."
+                })
+    
+    # Process each question group (only non-duplicates)
+    for question_id, group in question_groups.items():
+        # Skip if this question was already found as duplicate
+        if any(d["question"] == question_id for d in skipped_duplicates):
+            continue
+            
+        try:
+            # Sort files by page number
+            group["files"].sort(key=lambda f: int(os.path.splitext(f.filename)[0].split('_')[-1]))
+            group["pages"].sort()
+            
+            # Check if pages are consecutive starting from 1
+            expected_pages = list(range(1, len(group["pages"]) + 1))
+            if group["pages"] != expected_pages:
+                results.append({
+                    "question": question_id,
                     "status": "error",
-                    "message": "Invalid format. Expected: university_subject_course_year_semester_examtype_number"
+                    "message": f"Pages must be consecutive starting from 1. Found: {group['pages']}"
                 })
                 continue
             
-            # Extract parts (from the end)
-            question_number = parts.pop()
-            exam_type = parts.pop()
-            semester = parts.pop()
-            year = parts.pop()
-            course = parts.pop()
-            subject = parts.pop()
-            university = '_'.join(parts)  # Rest is university (may have underscores)
-            
-            # Create question
+            # Create question with APPROVED status for admin
             new_question = Question(
-                university=university,
-                subject=subject,
-                course=course,
-                year=int(year) if year.isdigit() else 0,
-                semester=semester,
-                exam_type=exam_type,
-                status="approved" if auto_approve else "pending"
+                university=group["university"],
+                subject=group["subject"],
+                course=group["course"],
+                year=int(group["year"]),
+                semester=group["semester"],
+                exam_type=group["exam_type"],
+                status="approved",  # Admin uploads are auto-approved
+                uploaded_by=user.id
             )
             db.add(new_question)
             db.flush()  # Get ID without committing
             
-            # Save file
-            _, ext = os.path.splitext(file.filename)
-            unique_name = f"{new_question.id}_{uuid.uuid4().hex[:8]}{ext}"
-            file_path = os.path.join(UPLOAD_FOLDER, unique_name)
+            # Save all images for this question
+            saved_images = []
+            for idx, file in enumerate(group["files"], 1):
+                _, ext = os.path.splitext(file.filename)
+                unique_name = f"{new_question.id}_page{idx}_{uuid.uuid4().hex[:6]}{ext}"
+                file_path = os.path.join(UPLOAD_FOLDER, unique_name)
+                
+                # Read and save file
+                content = await file.read()
+                with open(file_path, "wb") as buffer:
+                    buffer.write(content)
+                
+                # Create image record
+                image = QuestionImage(
+                    question_id=new_question.id,
+                    file_name=unique_name,
+                    file_path=file_path
+                )
+                db.add(image)
+                saved_images.append(unique_name)
             
-            with open(file_path, "wb") as buffer:
-                buffer.write(await file.read())
-            
-            # Create image record
-            image = QuestionImage(
-                question_id=new_question.id,
-                file_name=unique_name,
-                file_path=file_path
-            )
-            db.add(image)
+            created_questions.append(new_question)
             
             results.append({
-                "file": file.filename,
+                "question": question_id,
                 "status": "success",
                 "question_id": new_question.id,
+                "total_pages": len(group["files"]),
                 "parsed_data": {
-                    "university": university,
-                    "subject": subject,
-                    "course": course,
-                    "year": year,
-                    "semester": semester,
-                    "exam_type": exam_type,
-                    "question_number": question_number
-                }
+                    "university": group["university"],
+                    "subject": group["subject"],
+                    "course": group["course"],
+                    "year": group["year"],
+                    "semester": group["semester"],
+                    "exam_type": group["exam_type"]
+                },
+                "saved_images": saved_images
             })
             
         except Exception as e:
+            db.rollback()
             results.append({
-                "file": file.filename,
+                "question": question_id,
                 "status": "error",
                 "message": str(e)
             })
     
-    db.commit()
+    # Commit all successful questions
+    if created_questions:
+        db.commit()
+    
+    # Add invalid files to results
+    for invalid in invalid_files:
+        results.append({
+            "file": invalid["file"],
+            "status": "error",
+            "message": invalid["message"]
+        })
+    
+    # Add skipped duplicates to results
+    for duplicate in skipped_duplicates:
+        results.append({
+            "question": duplicate["question"],
+            "status": "skipped",
+            "existing_id": duplicate["existing_id"],
+            "message": duplicate["message"]
+        })
+    
+    # Count statistics
+    successful = len([r for r in results if r.get("status") == "success"])
+    failed = len([r for r in results if r.get("status") == "error"])
+    skipped = len([r for r in results if r.get("status") == "skipped"])
     
     return {
-        "total": len(files),
-        "successful": len([r for r in results if r["status"] == "success"]),
-        "failed": len([r for r in results if r["status"] == "error"]),
+        "total_questions": len(question_groups) + len(invalid_files),
+        "total_files": len(files),
+        "successful": successful,
+        "failed": failed,
+        "skipped": skipped,
         "results": results
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# # Add this to your router file
+
+# @router.post("/bulk-upload")
+# async def bulk_upload_questions(
+#     files: List[UploadFile] = File(...),
+#     db: Session = Depends(get_db),
+#     user: UserSchema = Depends(is_authenticated)
+# ):
+#     """
+#     Bulk upload questions from images.
+#     Expected filename format: university_subject_course_year_semester_examtype_pagenumber.extension
+#     Example: HSTU_ECE_Digital Communication_2025_5_1.jpg
+#     Multiple pages: HSTU_ECE_Digital Communication_2025_5_1.jpg, HSTU_ECE_Digital Communication_2025_5_2.jpg
+#     """
+#     # Verify admin
+#     verify_admin(user)
+    
+#     # Validate file count
+#     if len(files) > 100:
+#         return JSONResponse(
+#             status_code=400,
+#             content={
+#                 "error": "Maximum 100 files allowed per bulk upload",
+#                 "total": len(files)
+#             }
+#         )
+    
+#     # Group files by question identifier (without page number)
+#     question_groups = {}
+    
+#     for file in files:
+#         # Validate file type
+#         allowed_extensions = ['.png', '.jpg', '.jpeg', '.webp']
+#         _, ext = os.path.splitext(file.filename)
+#         if ext.lower() not in allowed_extensions:
+#             continue  # Skip invalid files
+        
+#         # Parse filename without extension
+#         name_without_ext = os.path.splitext(file.filename)[0]
+#         parts = name_without_ext.split('_')
+        
+#         # Validate format: university_subject_course_year_semester_examtype_pagenumber
+#         if len(parts) < 7:
+#             continue
+        
+#         # Extract parts (from the end)
+#         page_number = parts.pop()
+#         exam_type = parts.pop()
+#         semester = parts.pop()
+#         year = parts.pop()
+#         course = parts.pop()
+#         subject = parts.pop()
+#         university = '_'.join(parts)
+        
+#         # Create question identifier (without page number)
+#         question_id = f"{university}_{subject}_{course}_{year}_{semester}_{exam_type}"
+        
+#         if question_id not in question_groups:
+#             question_groups[question_id] = {
+#                 "university": university,
+#                 "subject": subject,
+#                 "course": course,
+#                 "year": year,
+#                 "semester": semester,
+#                 "exam_type": exam_type,
+#                 "pages": [],
+#                 "files": []
+#             }
+        
+#         # Only add if page number is valid
+#         if page_number.isdigit():
+#             question_groups[question_id]["pages"].append(int(page_number))
+#             question_groups[question_id]["files"].append(file)
+    
+#     results = []
+#     created_questions = []
+    
+#     for question_id, group in question_groups.items():
+#         try:
+#             # Sort files by page number
+#             group["files"].sort(key=lambda f: int(os.path.splitext(f.filename)[0].split('_')[-1]))
+#             group["pages"].sort()
+            
+#             # Check if pages are consecutive starting from 1
+#             expected_pages = list(range(1, len(group["pages"]) + 1))
+#             if group["pages"] != expected_pages:
+#                 results.append({
+#                     "question": question_id,
+#                     "status": "error",
+#                     "message": f"Pages must be consecutive starting from 1. Found: {group['pages']}"
+#                 })
+#                 continue
+            
+#             # Create question with APPROVED status for admin
+#             new_question = Question(
+#                 university=group["university"],
+#                 subject=group["subject"],
+#                 course=group["course"],
+#                 year=int(group["year"]),
+#                 semester=group["semester"],
+#                 exam_type=group["exam_type"],
+#                 status="approved",  # Admin uploads are auto-approved
+#                 uploaded_by=user.id
+#             )
+#             db.add(new_question)
+#             db.flush()  # Get ID without committing
+            
+#             # Save all images for this question
+#             saved_images = []
+#             for idx, file in enumerate(group["files"], 1):
+#                 _, ext = os.path.splitext(file.filename)
+#                 unique_name = f"{new_question.id}_page{idx}_{uuid.uuid4().hex[:6]}{ext}"
+#                 file_path = os.path.join(UPLOAD_FOLDER, unique_name)
+                
+#                 # Read and save file
+#                 content = await file.read()
+#                 with open(file_path, "wb") as buffer:
+#                     buffer.write(content)
+                
+#                 # Create image record
+#                 image = QuestionImage(
+#                     question_id=new_question.id,
+#                     file_name=unique_name,
+#                     file_path=file_path
+#                 )
+#                 db.add(image)
+#                 saved_images.append(unique_name)
+            
+#             created_questions.append(new_question)
+            
+#             results.append({
+#                 "question": question_id,
+#                 "status": "success",
+#                 "question_id": new_question.id,
+#                 "total_pages": len(group["files"]),
+#                 "parsed_data": {
+#                     "university": group["university"],
+#                     "subject": group["subject"],
+#                     "course": group["course"],
+#                     "year": group["year"],
+#                     "semester": group["semester"],
+#                     "exam_type": group["exam_type"]
+#                 },
+#                 "saved_images": saved_images
+#             })
+            
+#         except Exception as e:
+#             db.rollback()
+#             results.append({
+#                 "question": question_id,
+#                 "status": "error",
+#                 "message": str(e)
+#             })
+    
+#     # Commit all successful questions
+#     if created_questions:
+#         db.commit()
+    
+#     # Count statistics
+#     successful = len([r for r in results if r["status"] == "success"])
+#     failed = len([r for r in results if r["status"] == "error"])
+    
+#     return {
+#         "total_questions": len(question_groups),
+#         "total_files": len(files),
+#         "successful": successful,
+#         "failed": failed,
+#         "results": results
+#     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # ==================== USER MANAGEMENT ====================
 

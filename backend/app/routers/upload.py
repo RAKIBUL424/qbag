@@ -57,9 +57,15 @@ async def upload_file(
 
         _, ext = os.path.splitext(file.filename)
 
+        # unique_name = (
+        #     f"{new_question.id}_"
+        #     f"{uuid.uuid4().hex[:8]}"
+        #     f"{ext}"
+        # )
+
         unique_name = (
             f"{new_question.id}_"
-            f"{uuid.uuid4().hex[:8]}"
+            f"{university}_{subject}_{course}_{year}_{semester}_{exam_type}_{uuid.uuid4().hex[:3]}_"
             f"{ext}"
         )
 

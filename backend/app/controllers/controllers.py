@@ -5,6 +5,8 @@ from app.models.models import UserModel
 
 from app.dependencies import get_db
 
+from app.services.coin_service import CoinService
+
 from app.schemas.schemas import UserSchema, UserLoginSchema
 
 from pwdlib import PasswordHash
@@ -45,11 +47,17 @@ def register(body: UserSchema , db: Session):
         email = body.email,
         mobile = body.mobile
     )
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
+    try:
+        db.add(new_user)
+        db.commit()
+        db.refresh(new_user)
     
 
+
+        CoinService.recharge_coins(db, new_user.id, 0, 100)
+    except Exception:
+        db.rollback()
+        raise
 
     return new_user
 

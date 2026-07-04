@@ -8,6 +8,7 @@ EXAM_TYPE_PRICES = {
 
 # Recharge packages (amount_in_taka -> coins)
 RECHARGE_PACKAGES = {
+    0 : 100,
     20: 60,   # 20 tk = 60 coins
     50: 160,  # 50 tk = 160 coins
     100: 330, # 100 tk = 330 coins

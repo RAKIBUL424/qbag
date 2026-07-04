@@ -102,46 +102,46 @@ class OCRService:
 
 
 # Alternative: Using EasyOCR for better accuracy (optional)
-class EasyOCRService:
+# class EasyOCRService:
     
-    def __init__(self):
-        import easyocr
-        self.reader = easyocr.Reader(['en'])  # Add more languages as needed
+#     def __init__(self):
+#         import easyocr
+#         self.reader = easyocr.Reader(['en'])  # Add more languages as needed
     
-    def extract_text(self, image_bytes: bytes) -> Dict:
-        """
-        Extract text using EasyOCR
-        """
-        try:
-            # Convert bytes to image
-            image = Image.open(io.BytesIO(image_bytes))
+#     def extract_text(self, image_bytes: bytes) -> Dict:
+#         """
+#         Extract text using EasyOCR
+#         """
+#         try:
+#             # Convert bytes to image
+#             image = Image.open(io.BytesIO(image_bytes))
             
-            # Convert to numpy array
-            image_np = np.array(image)
+#             # Convert to numpy array
+#             image_np = np.array(image)
             
-            # Extract text
-            results = self.reader.readtext(image_np)
+#             # Extract text
+#             results = self.reader.readtext(image_np)
             
-            # Combine results
-            text_parts = []
-            for (bbox, text, confidence) in results:
-                if confidence > 0.5:  # Only include high confidence results
-                    text_parts.append(text)
+#             # Combine results
+#             text_parts = []
+#             for (bbox, text, confidence) in results:
+#                 if confidence > 0.5:  # Only include high confidence results
+#                     text_parts.append(text)
             
-            combined_text = ' '.join(text_parts)
-            cleaned_text = OCRService.clean_text(combined_text)
+#             combined_text = ' '.join(text_parts)
+#             cleaned_text = OCRService.clean_text(combined_text)
             
-            return {
-                "success": True,
-                "text": cleaned_text,
-                "raw_text": combined_text,
-                "word_count": len(cleaned_text.split()),
-                "char_count": len(cleaned_text)
-            }
+#             return {
+#                 "success": True,
+#                 "text": cleaned_text,
+#                 "raw_text": combined_text,
+#                 "word_count": len(cleaned_text.split()),
+#                 "char_count": len(cleaned_text)
+#             }
             
-        except Exception as e:
-            logger.error(f"EasyOCR extraction failed: {e}")
-            raise HTTPException(status_code=500, detail=f"OCR failed: {str(e)}")
+#         except Exception as e:
+#             logger.error(f"EasyOCR extraction failed: {e}")
+#             raise HTTPException(status_code=500, detail=f"OCR failed: {str(e)}")
 
 
 

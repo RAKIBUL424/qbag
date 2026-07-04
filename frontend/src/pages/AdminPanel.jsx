@@ -1,3 +1,5 @@
+
+
 // frontend/src/components/AdminPanel.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
@@ -16,6 +18,13 @@ const AdminPanel = () => {
   const [backups, setBackups] = useState([]);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  
+  // Bulk upload states
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadResults, setUploadResults] = useState([]);
+  const [uploadSummary, setUploadSummary] = useState(null);
+  const [skipDuplicates, setSkipDuplicates] = useState(true);
 
   // Get auth token
   const getAuthHeaders = () => ({
@@ -219,6 +228,100 @@ const AdminPanel = () => {
     }
   };
 
+  // Handle bulk upload
+  const handleBulkUpload = async (event) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+    
+    // Validate file count
+    if (files.length > 100) {
+      setError('Maximum 100 files allowed per upload');
+      event.target.value = '';
+      return;
+    }
+    
+    // Validate file types and sizes
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/webp'];
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    
+    for (let file of files) {
+      if (!allowedTypes.includes(file.type)) {
+        setError(`File ${file.name} has unsupported format. Only PNG, JPG, JPEG, and WEBP are allowed.`);
+        event.target.value = '';
+        return;
+      }
+      if (file.size > maxSize) {
+        setError(`File ${file.name} exceeds 10MB limit.`);
+        event.target.value = '';
+        return;
+      }
+    }
+    
+    setUploading(true);
+    setUploadProgress(0);
+    setUploadResults([]);
+    setUploadSummary(null);
+    setError('');
+    
+    const formData = new FormData();
+    for (let file of files) {
+      formData.append('files', file);
+    }
+    
+    // Add skip duplicates flag
+    formData.append('skip_duplicates', skipDuplicates.toString());
+    
+    try {
+      const res = await axios.post(
+        `${API_BASE}/${ADMIN_SECRET}/admin/bulk-upload`,
+        formData,
+        {
+          ...getAuthHeaders(),
+          headers: {
+            ...getAuthHeaders().headers,
+            'Content-Type': 'multipart/form-data',
+          },
+          onUploadProgress: (progressEvent) => {
+            const percentCompleted = Math.round(
+              (progressEvent.loaded * 100) / progressEvent.total
+            );
+            setUploadProgress(percentCompleted);
+          },
+        }
+      );
+      
+      setUploadResults(res.data.results || []);
+      setUploadSummary({
+        totalQuestions: res.data.total_questions || 0,
+        totalFiles: res.data.total_files || 0,
+        successful: res.data.successful || 0,
+        failed: res.data.failed || 0,
+        skipped: res.data.skipped || 0
+      });
+      
+      if (res.data.successful > 0) {
+        setSuccess(`Successfully uploaded ${res.data.successful} questions!`);
+        // Refresh data
+        await loadAllData();
+      }
+      
+      if (res.data.failed > 0 && res.data.successful === 0 && res.data.skipped === 0) {
+        setError('All questions failed to upload. Please check the results for details.');
+      }
+      
+      if (res.data.skipped > 0 && res.data.successful === 0 && res.data.failed === 0) {
+        setSuccess(`All questions were duplicates and were skipped. No new questions added.`);
+      }
+    } catch (err) {
+      console.error('Upload error:', err);
+      setError(err.response?.data?.error || 'Failed to upload files. Please try again.');
+    } finally {
+      setUploading(false);
+      setUploadProgress(0);
+      event.target.value = ''; // Reset input
+    }
+  };
+
   // Tabs
   const tabs = [
     { id: 'dashboard', label: '📊 Dashboard' },
@@ -226,6 +329,7 @@ const AdminPanel = () => {
     { id: 'questions', label: `📝 Questions (${allQuestions.length})` },
     { id: 'users', label: `👥 Users (${users.length})` },
     { id: 'backup', label: '💾 Backup' },
+    { id: 'bulk_upload', label: '📤 Bulk Upload' }
   ];
 
   return (
@@ -572,6 +676,253 @@ const AdminPanel = () => {
               </div>
             </div>
           )}
+
+          {/* Bulk Upload */}
+          {activeTab === 'bulk_upload' && (
+            <div>
+              <h3>📤 Bulk Upload Questions</h3>
+              
+              <div style={{
+                background: '#fff',
+                padding: '20px',
+                borderRadius: '8px',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                marginBottom: '20px'
+              }}>
+                <div style={{ marginBottom: '15px' }}>
+                  <h4>📋 Instructions:</h4>
+                  <ul style={{ lineHeight: '1.8' }}>
+                    <li><strong>Multi-page support:</strong> Questions can have multiple pages</li>
+                    <li><strong>Filename format:</strong> <code>university_subject_course_year_semester_examtype_pagenumber.extension</code></li>
+                    <li><strong>Example:</strong> <code>HSTU_ECE_Digital Communication_2025_5_1.jpg</code></li>
+                    <li><strong>Multi-page example:</strong> 
+                      <br/><code>HSTU_ECE_Digital Communication_2025_5_1.jpg</code> (page 1)
+                      <br/><code>HSTU_ECE_Digital Communication_2025_5_2.jpg</code> (page 2)
+                    </li>
+                    <li><strong>Page numbers:</strong> Must start from 1 and be consecutive</li>
+                    <li><strong>Auto-approved:</strong> Admin uploads are automatically approved</li>
+                    <li><strong>Duplicate Detection:</strong> Questions with same university, subject, course, year, semester, and exam type will be automatically skipped</li>
+                    <li>Maximum 100 files per upload</li>
+                    <li>Each file must be less than 10MB</li>
+                    <li>Supported formats: PNG, JPG, JPEG, WEBP</li>
+                  </ul>
+                </div>
+
+                {/* Skip Duplicates Toggle */}
+                <div style={{ 
+                  marginBottom: '15px', 
+                  padding: '15px', 
+                  background: '#f8f9fa', 
+                  borderRadius: '8px',
+                  border: '1px solid #dee2e6'
+                }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={skipDuplicates}
+                      onChange={(e) => setSkipDuplicates(e.target.checked)}
+                      style={{ width: '18px', height: '18px' }}
+                    />
+                    <span style={{ fontWeight: 'bold' }}>Skip duplicate questions (recommended)</span>
+                  </label>
+                  {!skipDuplicates && (
+                    <div style={{ 
+                      fontSize: '13px', 
+                      color: '#dc3545', 
+                      marginTop: '5px',
+                      padding: '8px',
+                      background: '#fff3f3',
+                      borderRadius: '4px'
+                    }}>
+                      ⚠️ Warning: Re-uploading duplicates will create duplicate entries in the database
+                    </div>
+                  )}
+                  {skipDuplicates && (
+                    <div style={{ 
+                      fontSize: '13px', 
+                      color: '#28a745', 
+                      marginTop: '5px',
+                      padding: '8px',
+                      background: '#f0fff0',
+                      borderRadius: '4px'
+                    }}>
+                      ✅ Questions already existing in the database will be automatically skipped
+                    </div>
+                  )}
+                </div>
+                
+                <div style={{
+                  border: '2px dashed #ddd',
+                  padding: '40px',
+                  textAlign: 'center',
+                  borderRadius: '8px',
+                  background: '#fafafa'
+                }}>
+                  <input
+                    type="file"
+                    multiple
+                    accept=".png,.jpg,.jpeg,.webp"
+                    onChange={handleBulkUpload}
+                    style={{
+                      display: 'none',
+                    }}
+                    id="bulk-upload-input"
+                    disabled={uploading}
+                  />
+                  <label
+                    htmlFor="bulk-upload-input"
+                    style={{
+                      cursor: uploading ? 'not-allowed' : 'pointer',
+                      display: 'block',
+                      padding: '20px'
+                    }}
+                  >
+                    <div style={{ fontSize: '48px', marginBottom: '10px' }}>📁</div>
+                    <div style={{ fontSize: '16px', color: '#666' }}>
+                      {uploading ? 'Uploading...' : 'Click or drag files here to upload'}
+                    </div>
+                    <div style={{ fontSize: '14px', color: '#999', marginTop: '10px' }}>
+                      Supported formats: PNG, JPG, JPEG, WEBP (Max 10MB each)
+                    </div>
+                    <div style={{ fontSize: '14px', color: '#999', marginTop: '5px' }}>
+                      Max 100 files per upload
+                    </div>
+                  </label>
+                </div>
+                
+                {/* Upload Progress */}
+                {uploading && (
+                  <div style={{ marginTop: '20px' }}>
+                    <div style={{
+                      width: '100%',
+                      height: '20px',
+                      backgroundColor: '#f0f0f0',
+                      borderRadius: '10px',
+                      overflow: 'hidden'
+                    }}>
+                      <div style={{
+                        width: `${uploadProgress}%`,
+                        height: '100%',
+                        backgroundColor: '#007bff',
+                        transition: 'width 0.3s ease'
+                      }} />
+                    </div>
+                    <div style={{ marginTop: '5px', color: '#666' }}>
+                      Uploading: {uploadProgress}%
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              {/* Upload Summary */}
+              {uploadSummary && (
+                <div style={{
+                  background: '#fff',
+                  padding: '20px',
+                  borderRadius: '8px',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                  marginBottom: '20px'
+                }}>
+                  <h4>📊 Upload Summary</h4>
+                  <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+                    <div>
+                      <span style={{ color: '#666' }}>Questions: </span>
+                      <strong>{uploadSummary.totalQuestions}</strong>
+                    </div>
+                    <div>
+                      <span style={{ color: '#666' }}>Files: </span>
+                      <strong>{uploadSummary.totalFiles}</strong>
+                    </div>
+                    <div>
+                      <span style={{ color: '#28a745' }}>✅ Successful: </span>
+                      <strong>{uploadSummary.successful}</strong>
+                    </div>
+                    <div>
+                      <span style={{ color: '#ffc107' }}>⏭️ Skipped (Duplicates): </span>
+                      <strong>{uploadSummary.skipped || 0}</strong>
+                    </div>
+                    <div>
+                      <span style={{ color: '#dc3545' }}>❌ Failed: </span>
+                      <strong>{uploadSummary.failed}</strong>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {/* Upload Results */}
+              {uploadResults && uploadResults.length > 0 && (
+                <div style={{
+                  background: '#fff',
+                  padding: '20px',
+                  borderRadius: '8px',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                }}>
+                  <h4>📝 Upload Details</h4>
+                  
+                  <div style={{ maxHeight: '500px', overflowY: 'auto' }}>
+                    {uploadResults.map((result, index) => (
+                      <div
+                        key={index}
+                        style={{
+                          padding: '12px',
+                          borderBottom: '1px solid #eee',
+                          backgroundColor: result.status === 'success' ? '#f8fff8' : 
+                                         result.status === 'skipped' ? '#fffbf0' : '#fff8f8'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                          <span style={{
+                            fontSize: '20px',
+                            color: result.status === 'success' ? '#28a745' : 
+                                   result.status === 'skipped' ? '#ffc107' : '#dc3545'
+                          }}>
+                            {result.status === 'success' ? '✅' : 
+                             result.status === 'skipped' ? '⏭️' : '❌'}
+                          </span>
+                          <div style={{ flex: 1 }}>
+                            <div>
+                              <strong>{result.question || result.file || 'Unknown'}</strong>
+                            </div>
+                            {result.status === 'success' && (
+                              <div style={{ fontSize: '13px', color: '#666', marginTop: '4px' }}>
+                                <div>Question ID: {result.question_id}</div>
+                                <div>Total Pages: {result.total_pages || 1}</div>
+                                {result.parsed_data && (
+                                  <div style={{ fontSize: '12px', color: '#999' }}>
+                                    {result.parsed_data.university} | {result.parsed_data.subject} | {result.parsed_data.course}
+                                    <br />
+                                    Year: {result.parsed_data.year} | Semester: {result.parsed_data.semester} | Exam: {result.parsed_data.exam_type}
+                                  </div>
+                                )}
+                                <div style={{ fontSize: '12px', color: '#28a745', marginTop: '4px' }}>
+                                  Status: Approved ✓
+                                </div>
+                              </div>
+                            )}
+                            {result.status === 'skipped' && (
+                              <div style={{ fontSize: '13px', color: '#856404', marginTop: '4px' }}>
+                                <div>⏭️ {result.message}</div>
+                                {result.existing_id && (
+                                  <div style={{ fontSize: '12px', color: '#999' }}>
+                                    Existing Question ID: {result.existing_id}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                            {result.status === 'error' && (
+                              <div style={{ fontSize: '13px', color: '#dc3545', marginTop: '4px' }}>
+                                {result.message}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </>
       )}
     </div>
@@ -579,3 +930,5 @@ const AdminPanel = () => {
 };
 
 export default AdminPanel;
+
+
