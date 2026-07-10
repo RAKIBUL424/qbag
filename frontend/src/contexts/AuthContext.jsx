@@ -1,8 +1,6 @@
 
-
-
 // contexts/AuthContext.jsx
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import axios from 'axios';
 
 const AuthContext = createContext(null);
@@ -19,9 +17,19 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [coinBalance, setCoinBalance] = useState(0);
+  const [userCoins, setUserCoins] = useState({
+    total_coins: 0,
+    breakdown: []
+  });
 
   const API_BASE = "http://127.0.0.1:8000";
+
+  // Helper function to get auth headers
+  const getAuthHeaders = useCallback(() => ({
+    headers: { 
+      Authorization: `Bearer ${localStorage.getItem('token')}` 
+    }
+  }), []);
 
   // Check if user is logged in on mount
   useEffect(() => {
@@ -43,60 +51,72 @@ export const AuthProvider = ({ children }) => {
       });
       
       setUser(response.data);
-      setCoinBalance(response.data.coins || 0);
       setIsLoggedIn(true);
+      
+      // Fetch coins after successful auth
+      await fetchUserCoins();
     } catch (error) {
       console.error('Auth check failed:', error);
       localStorage.removeItem('token');
       setIsLoggedIn(false);
       setUser(null);
-      setCoinBalance(0);
+      setUserCoins({ total_coins: 0, breakdown: [] });
     } finally {
       setLoading(false);
     }
   };
 
-  const login = (token, userData) => {
+  const login = async (token, userData) => {
     localStorage.setItem('token', token);
     setUser(userData);
     setIsLoggedIn(true);
-    // Fetch coin balance
-    fetchCoinBalance();
+    // Fetch coin balance after login
+    await fetchUserCoins();
   };
 
   const logout = () => {
     localStorage.removeItem('token');
     setUser(null);
     setIsLoggedIn(false);
-    setCoinBalance(0);
+    setUserCoins({ total_coins: 0, breakdown: [] });
   };
 
-  const fetchCoinBalance = async () => {
+  const fetchUserCoins = useCallback(async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setUserCoins({ total_coins: 0, breakdown: [] });
+      return;
+    }
+
     try {
-      const token = localStorage.getItem('token');
       const response = await axios.get(`${API_BASE}/premium/coins/balance`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setCoinBalance(response.data.coins || 0);
+      setUserCoins(response.data || { total_coins: 0, breakdown: [] });
     } catch (error) {
-      console.error('Error fetching coins:', error);
+      console.error("Error fetching coins:", error);
+      setUserCoins({ total_coins: 0, breakdown: [] });
     }
-  };
+  }, []);
 
   const updateCoins = (balance) => {
-    setCoinBalance(balance);
+    setUserCoins((prev) => ({
+      ...prev,
+      total_coins: balance
+    }));
   };
 
   const value = {
     user,
     isLoggedIn,
     loading,
-    coinBalance,
+    userCoins,
     login,
     logout,
     updateCoins,
-    fetchCoinBalance,
-    checkAuth
+    fetchUserCoins,
+    checkAuth,
+    getAuthHeaders
   };
 
   return (

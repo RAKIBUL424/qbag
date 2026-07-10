@@ -601,197 +601,6 @@ async def bulk_upload_questions(
 
 
 
-
-
-
-
-
-
-# # Add this to your router file
-
-# @router.post("/bulk-upload")
-# async def bulk_upload_questions(
-#     files: List[UploadFile] = File(...),
-#     db: Session = Depends(get_db),
-#     user: UserSchema = Depends(is_authenticated)
-# ):
-#     """
-#     Bulk upload questions from images.
-#     Expected filename format: university_subject_course_year_semester_examtype_pagenumber.extension
-#     Example: HSTU_ECE_Digital Communication_2025_5_1.jpg
-#     Multiple pages: HSTU_ECE_Digital Communication_2025_5_1.jpg, HSTU_ECE_Digital Communication_2025_5_2.jpg
-#     """
-#     # Verify admin
-#     verify_admin(user)
-    
-#     # Validate file count
-#     if len(files) > 100:
-#         return JSONResponse(
-#             status_code=400,
-#             content={
-#                 "error": "Maximum 100 files allowed per bulk upload",
-#                 "total": len(files)
-#             }
-#         )
-    
-#     # Group files by question identifier (without page number)
-#     question_groups = {}
-    
-#     for file in files:
-#         # Validate file type
-#         allowed_extensions = ['.png', '.jpg', '.jpeg', '.webp']
-#         _, ext = os.path.splitext(file.filename)
-#         if ext.lower() not in allowed_extensions:
-#             continue  # Skip invalid files
-        
-#         # Parse filename without extension
-#         name_without_ext = os.path.splitext(file.filename)[0]
-#         parts = name_without_ext.split('_')
-        
-#         # Validate format: university_subject_course_year_semester_examtype_pagenumber
-#         if len(parts) < 7:
-#             continue
-        
-#         # Extract parts (from the end)
-#         page_number = parts.pop()
-#         exam_type = parts.pop()
-#         semester = parts.pop()
-#         year = parts.pop()
-#         course = parts.pop()
-#         subject = parts.pop()
-#         university = '_'.join(parts)
-        
-#         # Create question identifier (without page number)
-#         question_id = f"{university}_{subject}_{course}_{year}_{semester}_{exam_type}"
-        
-#         if question_id not in question_groups:
-#             question_groups[question_id] = {
-#                 "university": university,
-#                 "subject": subject,
-#                 "course": course,
-#                 "year": year,
-#                 "semester": semester,
-#                 "exam_type": exam_type,
-#                 "pages": [],
-#                 "files": []
-#             }
-        
-#         # Only add if page number is valid
-#         if page_number.isdigit():
-#             question_groups[question_id]["pages"].append(int(page_number))
-#             question_groups[question_id]["files"].append(file)
-    
-#     results = []
-#     created_questions = []
-    
-#     for question_id, group in question_groups.items():
-#         try:
-#             # Sort files by page number
-#             group["files"].sort(key=lambda f: int(os.path.splitext(f.filename)[0].split('_')[-1]))
-#             group["pages"].sort()
-            
-#             # Check if pages are consecutive starting from 1
-#             expected_pages = list(range(1, len(group["pages"]) + 1))
-#             if group["pages"] != expected_pages:
-#                 results.append({
-#                     "question": question_id,
-#                     "status": "error",
-#                     "message": f"Pages must be consecutive starting from 1. Found: {group['pages']}"
-#                 })
-#                 continue
-            
-#             # Create question with APPROVED status for admin
-#             new_question = Question(
-#                 university=group["university"],
-#                 subject=group["subject"],
-#                 course=group["course"],
-#                 year=int(group["year"]),
-#                 semester=group["semester"],
-#                 exam_type=group["exam_type"],
-#                 status="approved",  # Admin uploads are auto-approved
-#                 uploaded_by=user.id
-#             )
-#             db.add(new_question)
-#             db.flush()  # Get ID without committing
-            
-#             # Save all images for this question
-#             saved_images = []
-#             for idx, file in enumerate(group["files"], 1):
-#                 _, ext = os.path.splitext(file.filename)
-#                 unique_name = f"{new_question.id}_page{idx}_{uuid.uuid4().hex[:6]}{ext}"
-#                 file_path = os.path.join(UPLOAD_FOLDER, unique_name)
-                
-#                 # Read and save file
-#                 content = await file.read()
-#                 with open(file_path, "wb") as buffer:
-#                     buffer.write(content)
-                
-#                 # Create image record
-#                 image = QuestionImage(
-#                     question_id=new_question.id,
-#                     file_name=unique_name,
-#                     file_path=file_path
-#                 )
-#                 db.add(image)
-#                 saved_images.append(unique_name)
-            
-#             created_questions.append(new_question)
-            
-#             results.append({
-#                 "question": question_id,
-#                 "status": "success",
-#                 "question_id": new_question.id,
-#                 "total_pages": len(group["files"]),
-#                 "parsed_data": {
-#                     "university": group["university"],
-#                     "subject": group["subject"],
-#                     "course": group["course"],
-#                     "year": group["year"],
-#                     "semester": group["semester"],
-#                     "exam_type": group["exam_type"]
-#                 },
-#                 "saved_images": saved_images
-#             })
-            
-#         except Exception as e:
-#             db.rollback()
-#             results.append({
-#                 "question": question_id,
-#                 "status": "error",
-#                 "message": str(e)
-#             })
-    
-#     # Commit all successful questions
-#     if created_questions:
-#         db.commit()
-    
-#     # Count statistics
-#     successful = len([r for r in results if r["status"] == "success"])
-#     failed = len([r for r in results if r["status"] == "error"])
-    
-#     return {
-#         "total_questions": len(question_groups),
-#         "total_files": len(files),
-#         "successful": successful,
-#         "failed": failed,
-#         "results": results
-#     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # ==================== USER MANAGEMENT ====================
 
 @router.get("/users")
@@ -825,37 +634,283 @@ async def get_all_users(
         "offset": offset
     }
 
-@router.post("/users/{user_id}/add-coins")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# app/routers/admin_routes.py - FIXED coin add section
+
+from ..services.coin_service import CoinService
+from app.config.coin_config import RECHARGE_PACKAGES
+# At the top of admin_routes.py, add these imports if not already there
+from app.config.coin_config import RECHARGE_PACKAGES, COIN_VALIDITY_DAYS
+from datetime import datetime, timedelta
+
+@router.post("/users/add-coins")
 async def add_coins_to_user(
-    user_id: int,
-    amount: int = Form(...),
+    username: str = Form(...),
+    amount_taka: int = Form(..., description="Amount in Taka (20, 50, 100, 200, 500)"),
     description: str = Form("Admin added coins"),
     db: Session = Depends(get_db),
     user: UserSchema = Depends(is_authenticated)
 ):
-    """Add coins to a user"""
+    """
+    Add coins to a user.
+    Admin only endpoint.
+    
+    - username: The username of the user to add coins to
+    - amount_taka: Amount in Taka (must match package: 20, 50, 100, 200, 500)
+    - description: Description for the transaction
+    """
+    # Verify admin
     verify_admin(user)
     
-    target_user = db.query(UserModel).filter(UserModel.id == user_id).first()
+    # Find the user
+    target_user = db.query(UserModel).filter(UserModel.username == username).first()
     if not target_user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(
+            status_code=404, 
+            detail=f"User '{username}' not found"
+        )
     
-    target_user.coins += amount
+    # Validate package
+    if amount_taka not in RECHARGE_PACKAGES:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Invalid package amount: {amount_taka}. Available packages: {list(RECHARGE_PACKAGES.keys())}"
+        )
+    
+    # Get coins from package
+    coins_to_add = RECHARGE_PACKAGES[amount_taka]
+    
+    # Calculate expiry date (30 days from now)
+    from datetime import datetime, timedelta
+    from app.config.coin_config import COIN_VALIDITY_DAYS
+    expiry_date = datetime.now() + timedelta(days=COIN_VALIDITY_DAYS)
+    
+    # Create coin package
+    coin_package = UserCoinPackage(
+        user_id=target_user.id,
+        package_amount=amount_taka,
+        coins_received=coins_to_add,
+        coins_remaining=coins_to_add,
+        expiry_date=expiry_date,
+        is_active=True
+    )
+    db.add(coin_package)
+    
+    # Update user's total coins
+    target_user.coins += coins_to_add
     
     # Create transaction record
     transaction = CoinTransaction(
-        user_id=user_id,
-        amount=amount,
-        transaction_type="admin_add",
-        description=f"Admin added {amount} coins: {description}"
+        user_id=target_user.id,
+        amount=coins_to_add,
+        transaction_type="admin_recharge",
+        description=f"{description} - {coins_to_add} coins added by admin {user.username} (Package: {amount_taka} Taka)"
     )
     db.add(transaction)
     db.commit()
+    db.refresh(target_user)
     
     return {
-        "message": f"Added {amount} coins to user {target_user.username}",
-        "new_balance": target_user.coins
+        "message": f"Successfully added {coins_to_add} coins to {username}",
+        "username": username,
+        "user_id": target_user.id,
+        "package_amount_taka": amount_taka,
+        "coins_added": coins_to_add,
+        "new_balance": target_user.coins,
+        "expiry_date": expiry_date.isoformat(),
+        "admin": user.username
     }
+
+
+@router.post("/users/add-custom-coins")
+async def add_custom_coins_to_user(
+    username: str = Form(...),
+    custom_coins: int = Form(..., description="Number of coins to add (overrides package)"),
+    description: str = Form("Admin added custom coins"),
+    db: Session = Depends(get_db),
+    user: UserSchema = Depends(is_authenticated)
+):
+    """
+    Add custom amount of coins to a user (overrides package system).
+    Admin only endpoint.
+    
+    - username: The username of the user to add coins to
+    - custom_coins: Number of coins to add (any positive integer)
+    - description: Description for the transaction
+    """
+    # Verify admin
+    verify_admin(user)
+    
+    # Validate custom coins
+    if custom_coins <= 0:
+        raise HTTPException(
+            status_code=400, 
+            detail="Custom coins must be a positive number"
+        )
+    
+    # Find the user
+    target_user = db.query(UserModel).filter(UserModel.username == username).first()
+    if not target_user:
+        raise HTTPException(
+            status_code=404, 
+            detail=f"User '{username}' not found"
+        )
+    
+    # Calculate expiry date (30 days from now)
+    from datetime import datetime, timedelta
+    from app.config.coin_config import COIN_VALIDITY_DAYS
+    expiry_date = datetime.now() + timedelta(days=COIN_VALIDITY_DAYS)
+    
+    # Create coin package
+    coin_package = UserCoinPackage(
+        user_id=target_user.id,
+        package_amount=0,  # No Taka amount for custom
+        coins_received=custom_coins,
+        coins_remaining=custom_coins,
+        expiry_date=expiry_date,
+        is_active=True
+    )
+    db.add(coin_package)
+    
+    # Update user's total coins
+    target_user.coins += custom_coins
+    
+    # Create transaction record
+    transaction = CoinTransaction(
+        user_id=target_user.id,
+        amount=custom_coins,
+        transaction_type="admin_custom_recharge",
+        description=f"{description} - {custom_coins} coins added by admin {user.username} (Custom amount)"
+    )
+    db.add(transaction)
+    db.commit()
+    db.refresh(target_user)
+    
+    return {
+        "message": f"Successfully added {custom_coins} custom coins to {username}",
+        "username": username,
+        "user_id": target_user.id,
+        "coins_added": custom_coins,
+        "new_balance": target_user.coins,
+        "expiry_date": expiry_date.isoformat(),
+        "admin": user.username
+    }
+
+
+# Also add this helper endpoint to check user balance
+@router.get("/users/{username}/balance")
+async def get_user_balance(
+    username: str,
+    db: Session = Depends(get_db),
+    user: UserSchema = Depends(is_authenticated)
+):
+    """Get user's current coin balance (admin only)"""
+    verify_admin(user)
+    
+    target_user = db.query(UserModel).filter(UserModel.username == username).first()
+    if not target_user:
+        raise HTTPException(
+            status_code=404, 
+            detail=f"User '{username}' not found"
+        )
+    
+    from app.services.expiration_service import ExpirationService
+    coin_breakdown = ExpirationService.get_coins_breakdown(db, target_user.id)
+    
+    return {
+        "username": target_user.username,
+        "user_id": target_user.id,
+        "total_coins": target_user.coins,
+        "coin_breakdown": coin_breakdown
+    }
+    
+
+
+
+# @router.post("/users/{user_id}/add-coins")
+# async def add_coins_to_user(
+#     user_id: int,
+#     amount: int = Form(...),
+#     description: str = Form("Admin added coins"),
+#     db: Session = Depends(get_db),
+#     user: UserSchema = Depends(is_authenticated)
+# ):
+#     """Add coins to a user"""
+#     verify_admin(user)
+    
+#     target_user = db.query(UserModel).filter(UserModel.id == user_id).first()
+#     if not target_user:
+#         raise HTTPException(status_code=404, detail="User not found")
+    
+#     target_user.coins += amount
+    
+#     # Create transaction record
+#     transaction = CoinTransaction(
+#         user_id=user_id,
+#         amount=amount,
+#         transaction_type="admin_add",
+#         description=f"Admin added {amount} coins: {description}"
+#     )
+#     db.add(transaction)
+#     db.commit()
+    
+#     return {
+#         "message": f"Added {amount} coins to user {target_user.username}",
+#         "new_balance": target_user.coins
+#     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 @router.post("/users/{user_id}/deduct-coins")
 async def deduct_coins_from_user(
@@ -891,6 +946,24 @@ async def deduct_coins_from_user(
         "message": f"Deducted {amount} coins from user {target_user.username}",
         "new_balance": target_user.coins
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # ==================== DASHBOARD STATS ====================
 

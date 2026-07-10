@@ -10,6 +10,7 @@ import PremiumSearch from "./pages/PremiumSearch";
 import FloatingScreenshotButton from "./components/FloatingScreenshotButton";
 import { AuthProvider } from "./contexts/AuthContext";
 import Profile from "./pages/Profile";
+import Pricing from "./pages/Pricing";
 
 function App() {
   return (
@@ -23,7 +24,9 @@ function App() {
           <Route path="/profile" element={<Profile/>}/>
           <Route path="/admin" element={<AdminPanel/>} />
           <Route path="/premium/search" element={<PremiumQuestions />} />
+          <Route path="/pricing" element={<Pricing />} />
         </Route>
+        
       </Routes>
       <FloatingScreenshotButton />
     </AuthProvider>

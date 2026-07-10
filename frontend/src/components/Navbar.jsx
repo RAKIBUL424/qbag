@@ -7,8 +7,10 @@ const Navbar = () => {
   const [theme, setTheme] = useState(
     localStorage.getItem("theme") || "light"
   );
-  const { user, isLoggedIn, coinBalance, logout } = useAuth();
+  const { user, isLoggedIn, userCoins, logout } = useAuth();
   const navigate = useNavigate();
+
+  
 
   // Theme toggle
   useEffect(() => {
@@ -241,7 +243,7 @@ const Navbar = () => {
           {isLoggedIn && (
             <>
               <Link to="/profile">Profile</Link>
-              <Link to="/purchases">My Purchases</Link>
+              {/* <Link to="/purchases">My Purchases</Link> */}
             </>
           )}
         </div>
@@ -262,7 +264,7 @@ const Navbar = () => {
                 onClick={() => navigate("/profile")}
                 title="Click to view profile"
               >
-                💰 {coinBalance}
+                💰 {userCoins.total_coins}
               </div>
 
               <img

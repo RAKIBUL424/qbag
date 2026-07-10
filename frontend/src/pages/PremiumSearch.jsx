@@ -4,6 +4,8 @@ import React, { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import CountdownTimer from "../components/CountdownTimer";
 
+import { Link } from "react-router";
+
 const API_BASE = "http://127.0.0.1:8000";
 
 // Question Grid Component
@@ -612,30 +614,30 @@ export default function PremiumSearch() {
   }, []);
 
   // Handle recharge
-  const handleRecharge = useCallback(async () => {
-    const amount = prompt("Enter recharge amount (20, 50, 100, 200, 500):");
-    const numAmount = parseInt(amount);
+  // const handleRecharge = useCallback(async () => {
+  //   const amount = prompt("Enter recharge amount (20, 50, 100, 200, 500):");
+  //   const numAmount = parseInt(amount);
 
-    if (!amount || !numAmount || ![20, 50, 100, 200, 500].includes(numAmount)) {
-      alert("Please enter a valid amount (20, 50, 100, 200, or 500)");
-      return;
-    }
+  //   if (!amount || !numAmount || ![20, 50, 100, 200, 500].includes(numAmount)) {
+  //     alert("Please enter a valid amount (20, 50, 100, 200, or 500)");
+  //     return;
+  //   }
 
-    try {
-      await axios.post(
-        `${API_BASE}/premium/coins/recharge`,
-        null,
-        {
-          params: { amount_taka: numAmount },
-          ...getAuthHeaders()
-        }
-      );
-      await fetchUserCoins();
-      alert("Recharge successful!");
-    } catch (err) {
-      alert("Recharge failed: " + (err.response?.data?.detail || err.message));
-    }
-  }, [fetchUserCoins]);
+  //   try {
+  //     await axios.post(
+  //       `${API_BASE}/premium/coins/recharge`,
+  //       null,
+  //       {
+  //         params: { amount_taka: numAmount },
+  //         ...getAuthHeaders()
+  //       }
+  //     );
+  //     await fetchUserCoins();
+  //     alert("Recharge successful!");
+  //   } catch (err) {
+  //     alert("Recharge failed: " + (err.response?.data?.detail || err.message));
+  //   }
+  // }, [fetchUserCoins]);
 
   // Reset search
   const resetSearch = useCallback(() => {
@@ -676,8 +678,8 @@ export default function PremiumSearch() {
           <div>
             <strong>💰 Coin Balance:</strong> {userCoins.total_coins} coins
           </div>
-          <button
-            onClick={handleRecharge}
+          <Link
+            to="/pricing"
             style={{
               padding: "8px 16px",
               backgroundColor: "#28a745",
@@ -688,7 +690,7 @@ export default function PremiumSearch() {
             }}
           >
             🔄 Recharge
-          </button>
+          </Link>
         </div>
         
         {/* Coin Breakdown with Realtime Timer */}

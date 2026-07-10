@@ -1,5 +1,4 @@
 
-
 // frontend/src/components/AdminPanel.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
@@ -25,6 +24,26 @@ const AdminPanel = () => {
   const [uploadResults, setUploadResults] = useState([]);
   const [uploadSummary, setUploadSummary] = useState(null);
   const [skipDuplicates, setSkipDuplicates] = useState(true);
+
+  // Coin management states
+  const [coinUsername, setCoinUsername] = useState('');
+  const [coinAmount, setCoinAmount] = useState('');
+  const [coinDescription, setCoinDescription] = useState('');
+  const [customCoins, setCustomCoins] = useState('');
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [userSearchTerm, setUserSearchTerm] = useState('');
+  const [filteredUsers, setFilteredUsers] = useState([]);
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
+
+  // Coin packages from config
+  const COIN_PACKAGES = {
+    0: { coins: 100, label: 'Free Bonus' },
+    20: { coins: 60, label: '20 Taka' },
+    50: { coins: 160, label: '50 Taka' },
+    100: { coins: 330, label: '100 Taka' },
+    200: { coins: 680, label: '200 Taka' },
+    500: { coins: 1750, label: '500 Taka' }
+  };
 
   // Get auth token
   const getAuthHeaders = () => ({
@@ -116,6 +135,21 @@ const AdminPanel = () => {
   useEffect(() => {
     loadAllData();
   }, [loadAllData]);
+
+  // Filter users for dropdown
+  useEffect(() => {
+    if (userSearchTerm.trim()) {
+      const filtered = users.filter(user => 
+        user.username.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
+        user.email.toLowerCase().includes(userSearchTerm.toLowerCase())
+      );
+      setFilteredUsers(filtered.slice(0, 10));
+      setShowUserDropdown(true);
+    } else {
+      setFilteredUsers([]);
+      setShowUserDropdown(false);
+    }
+  }, [userSearchTerm, users]);
 
   // Approve question
   const handleApprove = async (questionId) => {
@@ -228,6 +262,129 @@ const AdminPanel = () => {
     }
   };
 
+  // ==================== COIN MANAGEMENT FUNCTIONS ====================
+
+  // Add coins using package
+  const handleAddCoins = async (e) => {
+    e.preventDefault();
+    
+    if (!coinUsername) {
+      setError('Please select a user');
+      return;
+    }
+    
+    if (!coinAmount) {
+      setError('Please select a package');
+      return;
+    }
+
+    const amountNum = parseInt(coinAmount);
+    const packageInfo = COIN_PACKAGES[amountNum];
+    
+    if (!packageInfo) {
+      setError('Invalid package selected');
+      return;
+    }
+
+    if (!window.confirm(`Add ${packageInfo.coins} coins to user "${coinUsername}"? ${amountNum === 0 ? '(Free Bonus)' : `Package: ${amountNum} Taka`}`)) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const formData = new FormData();
+      formData.append('username', coinUsername);
+      formData.append('amount_taka', amountNum);
+      formData.append('description', coinDescription || (amountNum === 0 ? 'Free bonus coins' : `Package: ${amountNum} Taka`));
+
+      const res = await axios.post(
+        `${API_BASE}/${ADMIN_SECRET}/admin/users/add-coins`,
+        formData,
+        {
+          ...getAuthHeaders(),
+          headers: {
+            ...getAuthHeaders().headers,
+            'Content-Type': 'multipart/form-data',
+          }
+        }
+      );
+
+      setSuccess(`✅ ${res.data.message}`);
+      setCoinUsername('');
+      setCoinAmount('');
+      setCoinDescription('');
+      setUserSearchTerm('');
+      setSelectedUser(null);
+      await fetchUsers();
+      await fetchStats();
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Failed to add coins');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Add custom coins
+  const handleAddCustomCoins = async (e) => {
+    e.preventDefault();
+    
+    if (!coinUsername) {
+      setError('Please select a user');
+      return;
+    }
+    
+    if (!customCoins || parseInt(customCoins) <= 0) {
+      setError('Please enter a valid number of coins (positive integer)');
+      return;
+    }
+
+    const coinsNum = parseInt(customCoins);
+    if (!window.confirm(`Add ${coinsNum} custom coins to user "${coinUsername}"?`)) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const formData = new FormData();
+      formData.append('username', coinUsername);
+      formData.append('custom_coins', coinsNum);
+      formData.append('description', coinDescription || 'Admin added custom coins');
+
+      const res = await axios.post(
+        `${API_BASE}/${ADMIN_SECRET}/admin/users/add-custom-coins`,
+        formData,
+        {
+          ...getAuthHeaders(),
+          headers: {
+            ...getAuthHeaders().headers,
+            'Content-Type': 'multipart/form-data',
+          }
+        }
+      );
+
+      setSuccess(`✅ ${res.data.message}`);
+      setCoinUsername('');
+      setCustomCoins('');
+      setCoinDescription('');
+      setUserSearchTerm('');
+      setSelectedUser(null);
+      await fetchUsers();
+      await fetchStats();
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Failed to add custom coins');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle user selection from dropdown
+  const handleSelectUser = (user) => {
+    setCoinUsername(user.username);
+    setSelectedUser(user);
+    setUserSearchTerm(user.username);
+    setShowUserDropdown(false);
+  };
+
   // Handle bulk upload
   const handleBulkUpload = async (event) => {
     const files = event.target.files;
@@ -328,6 +485,7 @@ const AdminPanel = () => {
     { id: 'approvals', label: `⏳ Approvals (${pendingQuestions.length})` },
     { id: 'questions', label: `📝 Questions (${allQuestions.length})` },
     { id: 'users', label: `👥 Users (${users.length})` },
+    { id: 'coins', label: '🪙 Manage Coins' },
     { id: 'backup', label: '💾 Backup' },
     { id: 'bulk_upload', label: '📤 Bulk Upload' }
   ];
@@ -609,6 +767,392 @@ const AdminPanel = () => {
                     ))}
                   </tbody>
                 </table>
+              </div>
+            </div>
+          )}
+
+          {/* 🪙 Manage Coins - UPDATED WITH NEW PACKAGES */}
+          {activeTab === 'coins' && (
+            <div>
+              <h3>🪙 Manage User Coins</h3>
+              
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: '20px'
+              }}>
+                {/* Add Coins with Package */}
+                <div style={{
+                  background: '#fff',
+                  padding: '20px',
+                  borderRadius: '8px',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                }}>
+                  <h4>💰 Add Coins (Package)</h4>
+                  <p style={{ color: '#666', fontSize: '14px' }}>
+                    Add coins using predefined packages
+                  </p>
+                  
+                  <form onSubmit={handleAddCoins}>
+                    <div style={{ marginBottom: '15px' }}>
+                      <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+                        Username *
+                      </label>
+                      <div style={{ position: 'relative' }}>
+                        <input
+                          type="text"
+                          value={userSearchTerm}
+                          onChange={(e) => setUserSearchTerm(e.target.value)}
+                          onFocus={() => userSearchTerm && setShowUserDropdown(true)}
+                          placeholder="Search username..."
+                          style={{
+                            width: '100%',
+                            padding: '8px',
+                            border: '1px solid #ddd',
+                            borderRadius: '4px',
+                            boxSizing: 'border-box'
+                          }}
+                        />
+                        {showUserDropdown && filteredUsers.length > 0 && (
+                          <div style={{
+                            position: 'absolute',
+                            top: '100%',
+                            left: 0,
+                            right: 0,
+                            background: 'white',
+                            border: '1px solid #ddd',
+                            borderRadius: '4px',
+                            maxHeight: '200px',
+                            overflowY: 'auto',
+                            zIndex: 10,
+                            boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
+                          }}>
+                            {filteredUsers.map(user => (
+                              <div
+                                key={user.id}
+                                onClick={() => handleSelectUser(user)}
+                                style={{
+                                  padding: '8px 12px',
+                                  cursor: 'pointer',
+                                  borderBottom: '1px solid #eee',
+                                  display: 'flex',
+                                  justifyContent: 'space-between'
+                                }}
+                                onMouseEnter={(e) => e.target.style.background = '#f0f0f0'}
+                                onMouseLeave={(e) => e.target.style.background = 'white'}
+                              >
+                                <span>{user.username}</span>
+                                <span style={{ color: '#666', fontSize: '12px' }}>
+                                  {user.coins} coins
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      {selectedUser && (
+                        <div style={{ marginTop: '5px', fontSize: '12px', color: '#28a745' }}>
+                          ✅ Selected: {selectedUser.username} (Current coins: {selectedUser.coins})
+                        </div>
+                      )}
+                    </div>
+
+                    <div style={{ marginBottom: '15px' }}>
+                      <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+                        Select Package *
+                      </label>
+                      <select
+                        value={coinAmount}
+                        onChange={(e) => setCoinAmount(e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '8px',
+                          border: '1px solid #ddd',
+                          borderRadius: '4px',
+                          boxSizing: 'border-box'
+                        }}
+                        required
+                      >
+                        <option value="">Select package</option>
+                        {Object.entries(COIN_PACKAGES).map(([amount, info]) => (
+                          <option key={amount} value={amount}>
+                            {amount === '0' ? `🎁 Free Bonus (${info.coins} coins)` : `${info.label} (${info.coins} coins)`}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div style={{ marginBottom: '15px' }}>
+                      <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+                        Description (Optional)
+                      </label>
+                      <input
+                        type="text"
+                        value={coinDescription}
+                        onChange={(e) => setCoinDescription(e.target.value)}
+                        placeholder="e.g., Bonus for good performance"
+                        style={{
+                          width: '100%',
+                          padding: '8px',
+                          border: '1px solid #ddd',
+                          borderRadius: '4px',
+                          boxSizing: 'border-box'
+                        }}
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={loading || !coinUsername || !coinAmount}
+                      style={{
+                        width: '100%',
+                        padding: '10px',
+                        background: '#28a745',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: loading || !coinUsername || !coinAmount ? 'not-allowed' : 'pointer',
+                        opacity: loading || !coinUsername || !coinAmount ? 0.6 : 1
+                      }}
+                    >
+                      {loading ? 'Processing...' : '💰 Add Package Coins'}
+                    </button>
+                  </form>
+                </div>
+
+                {/* Add Custom Coins */}
+                <div style={{
+                  background: '#fff',
+                  padding: '20px',
+                  borderRadius: '8px',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                }}>
+                  <h4>⭐ Add Custom Coins</h4>
+                  <p style={{ color: '#666', fontSize: '14px' }}>
+                    Add any number of coins (overrides package system)
+                  </p>
+                  
+                  <form onSubmit={handleAddCustomCoins}>
+                    <div style={{ marginBottom: '15px' }}>
+                      <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+                        Username *
+                      </label>
+                      <div style={{ position: 'relative' }}>
+                        <input
+                          type="text"
+                          value={userSearchTerm}
+                          onChange={(e) => setUserSearchTerm(e.target.value)}
+                          onFocus={() => userSearchTerm && setShowUserDropdown(true)}
+                          placeholder="Search username..."
+                          style={{
+                            width: '100%',
+                            padding: '8px',
+                            border: '1px solid #ddd',
+                            borderRadius: '4px',
+                            boxSizing: 'border-box'
+                          }}
+                        />
+                        {showUserDropdown && filteredUsers.length > 0 && (
+                          <div style={{
+                            position: 'absolute',
+                            top: '100%',
+                            left: 0,
+                            right: 0,
+                            background: 'white',
+                            border: '1px solid #ddd',
+                            borderRadius: '4px',
+                            maxHeight: '200px',
+                            overflowY: 'auto',
+                            zIndex: 10,
+                            boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
+                          }}>
+                            {filteredUsers.map(user => (
+                              <div
+                                key={user.id}
+                                onClick={() => handleSelectUser(user)}
+                                style={{
+                                  padding: '8px 12px',
+                                  cursor: 'pointer',
+                                  borderBottom: '1px solid #eee',
+                                  display: 'flex',
+                                  justifyContent: 'space-between'
+                                }}
+                                onMouseEnter={(e) => e.target.style.background = '#f0f0f0'}
+                                onMouseLeave={(e) => e.target.style.background = 'white'}
+                              >
+                                <span>{user.username}</span>
+                                <span style={{ color: '#666', fontSize: '12px' }}>
+                                  {user.coins} coins
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      {selectedUser && (
+                        <div style={{ marginTop: '5px', fontSize: '12px', color: '#28a745' }}>
+                          ✅ Selected: {selectedUser.username} (Current coins: {selectedUser.coins})
+                        </div>
+                      )}
+                    </div>
+
+                    <div style={{ marginBottom: '15px' }}>
+                      <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+                        Number of Coins *
+                      </label>
+                      <input
+                        type="number"
+                        value={customCoins}
+                        onChange={(e) => setCustomCoins(e.target.value)}
+                        placeholder="Enter number of coins"
+                        min="1"
+                        style={{
+                          width: '100%',
+                          padding: '8px',
+                          border: '1px solid #ddd',
+                          borderRadius: '4px',
+                          boxSizing: 'border-box'
+                        }}
+                        required
+                      />
+                    </div>
+
+                    <div style={{ marginBottom: '15px' }}>
+                      <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+                        Description (Optional)
+                      </label>
+                      <input
+                        type="text"
+                        value={coinDescription}
+                        onChange={(e) => setCoinDescription(e.target.value)}
+                        placeholder="e.g., Special bonus"
+                        style={{
+                          width: '100%',
+                          padding: '8px',
+                          border: '1px solid #ddd',
+                          borderRadius: '4px',
+                          boxSizing: 'border-box'
+                        }}
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={loading || !coinUsername || !customCoins}
+                      style={{
+                        width: '100%',
+                        padding: '10px',
+                        background: '#6c5ce7',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: loading || !coinUsername || !customCoins ? 'not-allowed' : 'pointer',
+                        opacity: loading || !coinUsername || !customCoins ? 0.6 : 1
+                      }}
+                    >
+                      {loading ? 'Processing...' : '⭐ Add Custom Coins'}
+                    </button>
+                  </form>
+                </div>
+              </div>
+
+              {/* Quick Stats & Package Reference */}
+              <div style={{
+                marginTop: '20px',
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                gap: '15px'
+              }}>
+                <div style={{
+                  padding: '15px',
+                  background: '#e3f2fd',
+                  borderRadius: '8px',
+                  textAlign: 'center'
+                }}>
+                  <div style={{ fontSize: '24px', fontWeight: 'bold' }}>
+                    {users.reduce((sum, u) => sum + (u.coins || 0), 0)}
+                  </div>
+                  <div style={{ color: '#666' }}>Total Coins in System</div>
+                </div>
+                <div style={{
+                  padding: '15px',
+                  background: '#e8f5e9',
+                  borderRadius: '8px',
+                  textAlign: 'center'
+                }}>
+                  <div style={{ fontSize: '24px', fontWeight: 'bold' }}>
+                    {users.filter(u => (u.coins || 0) > 0).length}
+                  </div>
+                  <div style={{ color: '#666' }}>Users with Coins</div>
+                </div>
+                <div style={{
+                  padding: '15px',
+                  background: '#fff3e0',
+                  borderRadius: '8px',
+                  textAlign: 'center'
+                }}>
+                  <div style={{ fontSize: '24px', fontWeight: 'bold' }}>
+                    {users.length}
+                  </div>
+                  <div style={{ color: '#666' }}>Total Users</div>
+                </div>
+              </div>
+
+              {/* Coin Packages Reference - UPDATED */}
+              <div style={{
+                marginTop: '20px',
+                padding: '20px',
+                background: '#fff',
+                borderRadius: '8px',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+              }}>
+                <h4>📦 Coin Packages Reference</h4>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+                  gap: '10px',
+                  marginTop: '10px'
+                }}>
+                  {Object.entries(COIN_PACKAGES).map(([amount, info]) => (
+                    <div 
+                      key={amount} 
+                      style={{ 
+                        padding: '10px', 
+                        background: amount === '0' ? '#fff3cd' : '#f8f9fa', 
+                        borderRadius: '4px', 
+                        textAlign: 'center',
+                        border: amount === '0' ? '2px solid #ffc107' : '1px solid #eee'
+                      }}
+                    >
+                      <div>
+                        <strong>{amount === '0' ? '🎁 Free' : `${amount} Taka`}</strong>
+                      </div>
+                      <div style={{ color: '#28a745', fontSize: '18px', fontWeight: 'bold' }}>
+                        {info.coins} coins
+                      </div>
+                      {amount !== '0' && (
+                        <div style={{ fontSize: '12px', color: '#666' }}>
+                          {Math.round(info.coins / amount)} coins/Taka
+                        </div>
+                      )}
+                      {amount === '0' && (
+                        <div style={{ fontSize: '12px', color: '#856404' }}>
+                          Welcome Bonus
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <div style={{ 
+                  marginTop: '10px', 
+                  padding: '10px', 
+                  background: '#f8f9fa', 
+                  borderRadius: '4px',
+                  fontSize: '14px',
+                  color: '#666'
+                }}>
+                  💡 <strong>Note:</strong> Coins expire after {parseFloat(0.5 * 24)} hours (0.5 days) of inactivity
+                </div>
               </div>
             </div>
           )}
@@ -930,5 +1474,3 @@ const AdminPanel = () => {
 };
 
 export default AdminPanel;
-
-
