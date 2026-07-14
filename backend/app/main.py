@@ -11,7 +11,7 @@ from app.models.models import Base
 from app.routers import upload, fetch, user, premium_search, ocr, admin_router
 
 # Create tables
-Base.metadata.create_all(bind=engine)
+# Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 

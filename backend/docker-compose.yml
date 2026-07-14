@@ -1,0 +1,22 @@
+
+
+services:
+  backend:
+    image: qbag-backend:latest
+    build: .
+
+    container_name: qbag-backend
+
+    restart: unless-stopped
+
+    ports:
+      - "8000:8000"
+
+    env_file:
+      - .env
+
+    volumes:
+      - ./app/uploads:/app/app/uploads
+
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
