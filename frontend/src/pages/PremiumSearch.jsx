@@ -6,7 +6,7 @@ import CountdownTimer from "../components/CountdownTimer";
 
 import { Link } from "react-router";
 
-const API_BASE = "http://127.0.0.1:8000";
+const API_BASE = "/api";
 
 // Question Grid Component
 const QuestionGrid = ({ questions, purchase, API_BASE, onRefresh }) => {

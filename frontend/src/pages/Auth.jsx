@@ -5,7 +5,7 @@ import { useNavigate } from "react-router";
 import axios from "axios";
 import { useAuth } from "../contexts/AuthContext";
 
-const API_URL = "http://127.0.0.1:8000/user";
+const API_URL = "/api/user";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);

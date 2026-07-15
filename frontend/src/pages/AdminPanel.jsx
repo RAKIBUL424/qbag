@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 
-const API_BASE = "http://127.0.0.1:8000";
+const API_BASE = "/api";
 // SECRET ADMIN PATH - Change this to match your backend secret!
 const ADMIN_SECRET = "x7k9m2p4q8w5v3n1";
 

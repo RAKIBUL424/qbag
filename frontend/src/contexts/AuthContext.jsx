@@ -22,7 +22,7 @@ export const AuthProvider = ({ children }) => {
     breakdown: []
   });
 
-  const API_BASE = "http://127.0.0.1:8000";
+  const API_BASE = "/api";
 
   // Helper function to get auth headers
   const getAuthHeaders = useCallback(() => ({

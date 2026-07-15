@@ -5,7 +5,7 @@ import { useAuth } from "../contexts/AuthContext";
 import axios from "axios";
 import { Link } from "react-router";
 
-const API_BASE = "http://127.0.0.1:8000";
+const API_BASE = "/api";
 
 const Profile = () => {
   // const { user, isLoggedIn, userCoins, updateCoins } = useAuth();

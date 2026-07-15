@@ -2,7 +2,7 @@
 // import React, { useState, useRef, useEffect, useCallback } from 'react';
 // import axios from 'axios';
 
-// const API_BASE = "http://127.0.0.1:8000";
+// const API_BASE = "/api";
 
 // const ScreenshotCapture = ({ onClose, onTextExtracted }) => {
 //   const [isProcessing, setIsProcessing] = useState(false);
@@ -1189,7 +1189,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import axios from 'axios';
 
-const API_BASE = "http://127.0.0.1:8000";
+const API_BASE = "/api";
 
 const ScreenshotCapture = ({ onClose, onTextExtracted }) => {
   const [isProcessing, setIsProcessing] = useState(false);
