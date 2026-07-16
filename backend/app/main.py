@@ -76,5 +76,5 @@ async def get_uploaded_image(image_name: str):
 @app.get("/")
 async def home():
     return {
-        "message": "QbAg"
+        "message": "QbAg API v2 Test"
     }
