@@ -1,22 +1,27 @@
-
-
 services:
-  backend:
-    image: qbag-backend:latest
-    build: .
-
-    container_name: qbag-backend
-
+  postgres:
+    image: postgres:16
+    container_name: qbag-postgres
     restart: unless-stopped
+    environment:
+      POSTGRES_DB: qbag
+      POSTGRES_USER: rakibul
+      POSTGRES_PASSWORD: qbag2026rakibuL
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
 
+  backend:
+    build: .
+    container_name: qbag-backend
+    restart: unless-stopped
+    depends_on:
+      - postgres
     ports:
       - "8000:8000"
-
     env_file:
       - .env
-
     volumes:
       - ./app/uploads:/app/app/uploads
 
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+volumes:
+  postgres_data:
