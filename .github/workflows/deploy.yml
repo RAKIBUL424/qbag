@@ -46,8 +46,8 @@ jobs:
 
             pnpm build
 
-            sudo rm -rf /var/www/qbag/*
+            rm -rf /var/www/qbag/*
 
-            sudo cp -r dist/* /var/www/qbag/
+            cp -r dist/* /var/www/qbag/
 
             sudo systemctl reload nginx
