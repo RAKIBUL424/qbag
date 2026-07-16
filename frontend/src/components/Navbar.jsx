@@ -235,7 +235,7 @@ const Navbar = () => {
         </Link>
 
         <div className="qbag-links">
-          <Link to="/">Home</Link>
+          <Link to="/">Home for test</Link>
           <Link to="/upload">Upload</Link>
           <Link to="/premium">Premium Services</Link>
           <Link to="/pricing">Pricing</Link>

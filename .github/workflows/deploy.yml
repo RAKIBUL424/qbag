@@ -36,4 +36,18 @@ jobs:
             echo "Clean unused images..."
             docker image prune -f
 
-            echo "Deployment completed."
+            echo "Backend Deployment completed."
+
+            cd ~/qbag/frontend
+
+            git pull origin main
+
+            pnpm install --frozen-lockfile
+
+            pnpm build
+
+            sudo rm -rf /var/www/qbag/*
+
+            sudo cp -r dist/* /var/www/qbag/
+
+            sudo systemctl reload nginx
