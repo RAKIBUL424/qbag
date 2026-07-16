@@ -13,14 +13,13 @@ from app.routers import upload, fetch, user, premium_search, ocr, admin_router
 # Create tables
 # Base.metadata.create_all(bind=engine)
 
-app = FastAPI()
+app = FastAPI(root_path="/api")
 
 # CORS configuration
 origins = [
     "http://127.0.0.1:3000",
     "http://localhost:3000",
-    "http://127.0.0.1:8000",
-    "http://localhost:8000",
+    "http://144.79.249.92",
 ]
 
 app.add_middleware(
