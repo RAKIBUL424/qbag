@@ -22,7 +22,7 @@ function App() {
           <Route path="/upload" element={<UploadQuestion />} />
           <Route path="/user" element={<Auth />} />
           <Route path="/profile" element={<Profile/>}/>
-          <Route path="/admin" element={<AdminPanel/>} />
+          <Route path="/smg998-1030/admin" element={<AdminPanel/>} />
           <Route path="/premium/search" element={<PremiumQuestions />} />
           <Route path="/pricing" element={<Pricing />} />
         </Route>

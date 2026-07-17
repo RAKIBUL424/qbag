@@ -1,21 +1,32 @@
 # app/services/ocr_service.py
 import cv2
+import io
+import re
+import shutil
+import logging
+import platform
+
 import numpy as np
 import pytesseract
 from PIL import Image
-import io
-import base64
-import re
-from typing import Dict, Optional
-import logging
 from fastapi import HTTPException
-import pytesseract
-import os
+from typing import Dict
 
 logger = logging.getLogger(__name__)
 
 
-pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"  # Adjust based on your OS
+# pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"  # Adjust based on your OS
+if platform.system() == "Windows":
+    pytesseract.pytesseract.tesseract_cmd = (
+        r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+    )
+else:
+    tesseract = shutil.which("tesseract")
+
+    if not tesseract:
+        raise RuntimeError("Tesseract executable not found.")
+
+    pytesseract.pytesseract.tesseract_cmd = tesseract
 
 class OCRService:
     

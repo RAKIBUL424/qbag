@@ -17,8 +17,8 @@ RECHARGE_PACKAGES = {
 }
 
 # Coin validity in days
-COIN_VALIDITY_DAYS = 0.5
-SEARCH_RESULT_VALIDITY_DAYS = 0.5
+COIN_VALIDITY_DAYS = 20
+SEARCH_RESULT_VALIDITY_DAYS = 30
 
 
 # app/config/ocr_config.py

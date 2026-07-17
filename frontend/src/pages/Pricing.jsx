@@ -48,7 +48,7 @@ const Pricing = () => {
       price: 20,
       coins: 60,
       totalCoins: 60,
-      features: ['60 Coins', 'Valid 30 days', 'Basic questions'],
+      features: ['60 Coins', 'Valid 20 days', 'All questions'],
       popular: false,
       icon: '🌟',
     },
@@ -58,7 +58,7 @@ const Pricing = () => {
       price: 50,
       coins: 200,
       totalCoins: 200,
-      features: ['200 Coins', 'Valid 60 days', 'All questions', 'Priority support'],
+      features: ['200 Coins', 'Valid 20 days', 'All questions'],
       popular: true,
       icon: '🚀',
     }
@@ -308,7 +308,10 @@ const Pricing = () => {
       <div style={styles.header}>
         <div style={styles.title}>💰 Coin Packages</div>
         <p style={styles.subtitle}>
-          Choose your package and start learning!
+          Choose your package and start searching!
+        </p>
+        <p style={styles.coinsNumber}>
+          The app is currently in development. Currently we are not automatically processing payments. If you need, you can contact the admin to purchase a package.
         </p>
       </div>
 
@@ -360,16 +363,22 @@ const Pricing = () => {
 
         <div style={styles.paymentInfo}>
           <div style={styles.paymentItem}>
-            <div style={styles.paymentLabel}>📱 bKash Number</div>
-            <div style={styles.paymentValue}>017XX-XXXXXX</div>
+            {/* <div style={styles.paymentLabel}>📱 bKash Number</div>
+            <div style={styles.paymentValue}>017XX-XXXXXX</div> */}
+            <div style={styles.paymentLabel}>Before Payment send message to the admin. If the admin is availabel or not.</div>
+            {/* <div style={styles.paymentValue}>017XX-XXXXXX</div> */}
           </div>
           <div style={styles.paymentItem}>
-            <div style={styles.paymentLabel}>💰 Reference</div>
-            <div style={styles.paymentValue}>Name + Package</div>
+            {/* <div style={styles.paymentLabel}>💰 Reference</div>
+            <div style={styles.paymentValue}>Name + Package</div> */}
+            <div style={styles.paymentLabel}>Without getting response from the admin, we discurage to make payment.</div>
+            {/* <div style={styles.paymentValue}>017XX-XXXXXX</div> */}
           </div>
           <div style={styles.paymentItem}>
-            <div style={styles.paymentLabel}>⏱️ Processing</div>
-            <div style={styles.paymentValue}>5-10 min</div>
+            {/* <div style={styles.paymentLabel}>⏱️ Processing</div>
+            <div style={styles.paymentValue}>5-10 min</div> */}
+            <div style={styles.paymentLabel}>After getting response from the admin, you can make payment.</div>
+            <div style={styles.paymentValue}>5-10 min could take to process</div>
           </div>
         </div>
 
@@ -378,9 +387,13 @@ const Pricing = () => {
             <span style={styles.instructionNumber}>1</span>
             <span>Send ৳20 (60 coins) or ৳50 (200 coins) to the bKash number</span>
           </div>
-          <div style={styles.instructionStep}>
+          {/* <div style={styles.instructionStep}>
             <span style={styles.instructionNumber}>2</span>
             <span>Send transaction ID & email to our Facebook page</span>
+          </div> */}
+          <div style={styles.instructionStep}>
+            <span style={styles.instructionNumber}>2</span>
+            <span>Send userID & screenshot of your transaction to our Facebook page</span>
           </div>
           <div style={styles.instructionStep}>
             <span style={styles.instructionNumber}>3</span>
@@ -390,7 +403,7 @@ const Pricing = () => {
 
         <div style={styles.contactRow}>
           <a
-            href="https://www.facebook.com/your-profile-id"
+            href="https://www.facebook.com/ahmdrakibul.islam.5/"
             target="_blank"
             rel="noopener noreferrer"
             style={styles.facebookButton}
@@ -415,7 +428,7 @@ const Pricing = () => {
       </div>
 
       <div style={styles.footer}>
-        <p>Coins valid for 30-60 days • Questions? Contact on Facebook</p>
+        <p>Coins valid for 20 days • Questions? Contact on Facebook</p>
       </div>
     </div>
   );
