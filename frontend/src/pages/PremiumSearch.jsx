@@ -12,6 +12,7 @@ const API_BASE = "/api";
 
 
 // Question Grid Component - Complete with Full-Size Image Expansion
+// Question Grid Component - Fixed Image Display
 const QuestionGrid = ({ questions, purchase, API_BASE, onRefresh }) => {
   const [expandedQuestion, setExpandedQuestion] = useState(null);
   const [imageErrors, setImageErrors] = useState({});
@@ -215,7 +216,7 @@ const QuestionGrid = ({ questions, purchase, API_BASE, onRefresh }) => {
                 </div>
               )}
 
-              {/* Images */}
+              {/* Images - FIXED: Removed maxHeight and objectFit constraints */}
               {images.length > 0 ? (
                 <div style={{ marginBottom: "10px" }}>
                   {images.map((image, imgIndex) => {
@@ -247,13 +248,11 @@ const QuestionGrid = ({ questions, purchase, API_BASE, onRefresh }) => {
                           alt={`Question ${index + 1} - Image ${imgIndex + 1}`}
                           style={{
                             width: "100%",
-                            height: "auto",
-                            maxHeight: isExpanded ? "400px" : "200px",
-                            objectFit: "contain",
+                            height: "auto", // Allow natural height
                             borderRadius: "4px",
                             border: "1px solid #eee",
-                            transition: "max-height 0.3s ease",
-                            cursor: "pointer"
+                            cursor: "pointer",
+                            display: "block" // Remove extra space below image
                           }}
                           onClick={(e) => handleImageClick(e, imageUrl)}
                           onError={() => handleImageError(q.id, imgIndex)}
@@ -374,7 +373,7 @@ const QuestionGrid = ({ questions, purchase, API_BASE, onRefresh }) => {
         })}
       </div>
 
-      {/* Full-Size Image Modal */}
+      {/* Full-Size Image Modal - IMPROVED: Better handling of tall images */}
       {expandedImage && (
         <div
           style={{
@@ -389,7 +388,8 @@ const QuestionGrid = ({ questions, purchase, API_BASE, onRefresh }) => {
             alignItems: "center",
             zIndex: 9999,
             cursor: "pointer",
-            animation: "fadeIn 0.3s ease"
+            animation: "fadeIn 0.3s ease",
+            padding: "20px"
           }}
           onClick={closeImageModal}
         >
@@ -400,22 +400,23 @@ const QuestionGrid = ({ questions, purchase, API_BASE, onRefresh }) => {
               maxHeight: "95vh",
               display: "flex",
               justifyContent: "center",
-              alignItems: "center"
+              alignItems: "center",
+              width: "100%",
+              height: "100%"
             }}
           >
             <img
               src={expandedImage}
               alt="Enlarged view"
               style={{
-                // maxWidth: "100%",
-                // maxHeight: "100%",
-                // objectFit: "contain",
-                // borderRadius: "8px",
-                // boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
-                // animation: "zoomIn 0.3s ease"
-                width: "100%",
-                border: "1px solid #ddd",
+                maxWidth: "100%",
+                maxHeight: "100%",
+                width: "auto",
+                height: "auto",
+                objectFit: "contain",
                 borderRadius: "8px",
+                boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
+                animation: "zoomIn 0.3s ease"
               }}
               onClick={(e) => e.stopPropagation()}
             />
@@ -439,7 +440,8 @@ const QuestionGrid = ({ questions, purchase, API_BASE, onRefresh }) => {
                 justifyContent: "center",
                 alignItems: "center",
                 transition: "all 0.3s ease",
-                backdropFilter: "blur(4px)"
+                backdropFilter: "blur(4px)",
+                zIndex: 10000
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.3)";
@@ -466,25 +468,10 @@ const QuestionGrid = ({ questions, purchase, API_BASE, onRefresh }) => {
               borderRadius: "20px",
               backdropFilter: "blur(4px)",
               border: "1px solid rgba(255, 255, 255, 0.1)",
-              userSelect: "none"
+              userSelect: "none",
+              whiteSpace: "nowrap"
             }}>
               Click anywhere or press ESC to close
-            </div>
-
-            {/* Image Counter/Info */}
-            <div style={{
-              position: "absolute",
-              top: "20px",
-              left: "20px",
-              color: "rgba(255, 255, 255, 0.7)",
-              fontSize: "14px",
-              backgroundColor: "rgba(0, 0, 0, 0.5)",
-              padding: "6px 14px",
-              borderRadius: "20px",
-              backdropFilter: "blur(4px)",
-              border: "1px solid rgba(255, 255, 255, 0.1)"
-            }}>
-              🔍 Full Size View
             </div>
           </div>
         </div>
