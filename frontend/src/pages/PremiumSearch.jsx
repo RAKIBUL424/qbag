@@ -407,12 +407,15 @@ const QuestionGrid = ({ questions, purchase, API_BASE, onRefresh }) => {
               src={expandedImage}
               alt="Enlarged view"
               style={{
-                maxWidth: "100%",
-                maxHeight: "100%",
-                objectFit: "contain",
+                // maxWidth: "100%",
+                // maxHeight: "100%",
+                // objectFit: "contain",
+                // borderRadius: "8px",
+                // boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
+                // animation: "zoomIn 0.3s ease"
+                width: "100%",
+                border: "1px solid #ddd",
                 borderRadius: "8px",
-                boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
-                animation: "zoomIn 0.3s ease"
               }}
               onClick={(e) => e.stopPropagation()}
             />
