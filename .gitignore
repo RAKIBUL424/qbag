@@ -19,4 +19,4 @@ frontend/dist/
 .DS_Store
 Thumbs.db
 backend/app/uploads/*
-!backend/app/uploads/.gitkeep
+!backend/app/uploads/.gitkeep"backend/.env" 
