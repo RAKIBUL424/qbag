@@ -5,7 +5,7 @@ backend/**/*.pyc
 backend/questions.db
 
 # Environment
-# backend/.env
+backend/.env
 frontend/.env
 
 # Node
