@@ -5,7 +5,7 @@ backend/**/*.pyc
 backend/questions.db
 
 # Environment
-backend/.env
+# backend/.env
 frontend/.env
 
 # Node
@@ -18,3 +18,5 @@ frontend/dist/
 # OS
 .DS_Store
 Thumbs.db
+backend/app/uploads/*
+!backend/app/uploads/.gitkeep

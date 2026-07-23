@@ -8,7 +8,7 @@ import os
 
 from app.database import engine
 from app.models.models import Base
-from app.routers import upload, fetch, user, premium_search, ocr, admin_router
+from app.routers import upload, fetch, user, premium_search, ocr, admin_router, health
 
 # Create tables
 # Base.metadata.create_all(bind=engine)
@@ -43,6 +43,7 @@ app.include_router(premium_search.router)
 app.include_router(ocr.router)
 app.include_router(user.router)
 app.include_router(admin_router.router)
+app.include_router(health.router)
 
 # Custom route to serve images with CORS headers
 @app.get("/uploads/{image_name}")
