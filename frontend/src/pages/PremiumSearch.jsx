@@ -84,7 +84,7 @@ const QuestionGrid = ({ questions, purchase, API_BASE, onRefresh }) => {
                 gap: "8px"
               }}>
                 <span>⏰ Time Remaining:</span>
-                <CountdownTimer 
+                <CountdownTimer
                   expiryDate={purchase.expiry_date}
                   onExpire={() => {
                     if (onRefresh) onRefresh();
@@ -111,10 +111,10 @@ const QuestionGrid = ({ questions, purchase, API_BASE, onRefresh }) => {
         {questions.map((q, index) => {
           const images = getQuestionImages(q);
           const isExpanded = expandedQuestion === q.id;
-          
+
           return (
-            <div 
-              key={q.id || index} 
+            <div
+              key={q.id || index}
               style={{
                 border: isExpanded ? "2px solid #007bff" : "1px solid #ddd",
                 borderRadius: "8px",
@@ -158,8 +158,8 @@ const QuestionGrid = ({ questions, purchase, API_BASE, onRefresh }) => {
                     borderRadius: "12px",
                     fontSize: "12px",
                     fontWeight: "bold",
-                    backgroundColor: q.exam_type === "Final" ? "#dc3545" : 
-                                   q.exam_type === "Mid" ? "#ffc107" : "#28a745",
+                    backgroundColor: q.exam_type === "Final" ? "#dc3545" :
+                      q.exam_type === "Mid" ? "#ffc107" : "#28a745",
                     color: q.exam_type === "Mid" ? "#333" : "white"
                   }}>
                     {q.exam_type}
@@ -185,7 +185,7 @@ const QuestionGrid = ({ questions, purchase, API_BASE, onRefresh }) => {
                   {images.map((image, imgIndex) => {
                     const errorKey = `${q.id}-${imgIndex}`;
                     const imageUrl = getImageUrl(image.url || image.image_path || image);
-                    
+
                     if (imageErrors[errorKey]) {
                       return (
                         <div key={imgIndex} style={{
@@ -203,7 +203,7 @@ const QuestionGrid = ({ questions, purchase, API_BASE, onRefresh }) => {
                         </div>
                       );
                     }
-                    
+
                     return (
                       <div key={imgIndex} style={{ marginBottom: "10px" }}>
                         <img
@@ -296,7 +296,7 @@ const QuestionGrid = ({ questions, purchase, API_BASE, onRefresh }) => {
 
                   <div style={{
                     display: "grid",
-                    gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
                     gap: "8px",
                     fontSize: "13px",
                     color: "#666",
@@ -309,9 +309,9 @@ const QuestionGrid = ({ questions, purchase, API_BASE, onRefresh }) => {
                     {q.year && <div><strong>Year:</strong> {q.year}</div>}
                     {q.semester && <div><strong>Semester:</strong> {q.semester}</div>}
                     {q.marks && <div><strong>Marks:</strong> {q.marks}</div>}
-                    <div style={{ fontSize: "11px", color: "#999" }}>
+                    {/* <div style={{ fontSize: "11px", color: "#999" }}>
                       <strong>ID:</strong> {q.id || 'N/A'}
-                    </div>
+                    </div> */}
                   </div>
                 </div>
               )}
@@ -532,7 +532,7 @@ export default function PremiumSearch() {
       setSearchResult(null);
 
       const params = { university, subject };
-      
+
       if (course && course.trim()) params.course = course;
       if (year && year.trim()) params.year = parseInt(year);
       if (semester && semester.trim()) params.semester = semester;
@@ -692,7 +692,7 @@ export default function PremiumSearch() {
             🔄 Recharge
           </Link>
         </div>
-        
+
         {/* Coin Breakdown with Realtime Timer */}
         {userCoins.breakdown && userCoins.breakdown.length > 0 && (
           <div style={{ marginTop: "10px", fontSize: "14px" }}>
@@ -717,7 +717,7 @@ export default function PremiumSearch() {
                     {pkg.is_expired ? (
                       <span style={{ color: "#dc3545" }}>⚠️ Expired</span>
                     ) : (
-                      <CountdownTimer 
+                      <CountdownTimer
                         expiryDate={pkg.expiry_date}
                         onExpire={() => {
                           fetchUserCoins();
@@ -1035,7 +1035,7 @@ export default function PremiumSearch() {
                       flexWrap: "wrap"
                     }}>
                       <strong>⏰ Time Remaining:</strong>
-                      <CountdownTimer 
+                      <CountdownTimer
                         expiryDate={purchase.expiry_date}
                         onExpire={() => {
                           fetchPurchases();
