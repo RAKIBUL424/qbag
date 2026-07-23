@@ -142,7 +142,7 @@ const QuestionGrid = ({ questions, purchase, API_BASE, onRefresh }) => {
       {/* Questions Grid */}
       <div style={{
         display: "grid",
-        gridTemplateColumns: "repeat(auto-fill, minmax(350px, 1fr))",
+        gridTemplateColumns: "repeat(auto-fill, minmax(550px, 1fr))",
         gap: "20px"
       }}>
         {questions.map((q, index) => {
