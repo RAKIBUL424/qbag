@@ -345,7 +345,7 @@ const Profile = () => {
             boxShadow: theme.shadow,
             textAlign: 'center'
           }}>
-            <button
+            <Link
               to="/price"
               
               style={{
@@ -363,7 +363,7 @@ const Profile = () => {
               }}
             >
               {loading ? '⏳ Processing...' : '💰 Recharge'}
-            </button>
+            </Link>
             {message && (
               <div style={{
                 marginTop: '10px',
