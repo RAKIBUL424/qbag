@@ -85,40 +85,40 @@ const Profile = () => {
   };
 
   // Handle coin recharge
-  const handleRecharge = async () => {
-    const amount = prompt("Enter recharge amount (20, 50, 100, 200, 500):");
-    const numAmount = parseInt(amount);
+  // const handleRecharge = async () => {
+  //   const amount = prompt("Enter recharge amount (20, 50, 100, 200, 500):");
+  //   const numAmount = parseInt(amount);
     
-    if (!amount || !numAmount || ![20, 50, 100, 200, 500].includes(numAmount)) {
-      alert("Please enter a valid amount (20, 50, 100, 200, or 500)");
-      return;
-    }
+  //   if (!amount || !numAmount || ![20, 50, 100, 200, 500].includes(numAmount)) {
+  //     alert("Please enter a valid amount (20, 50, 100, 200, or 500)");
+  //     return;
+  //   }
 
-    try {
-      setLoading(true);
-      const token = localStorage.getItem('token');
-      const response = await axios.post(
-        `${API_BASE}/premium/coins/recharge`,
-        null,
-        {
-          params: { amount_taka: numAmount },
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
+  //   try {
+  //     setLoading(true);
+  //     const token = localStorage.getItem('token');
+  //     const response = await axios.post(
+  //       `${API_BASE}/premium/coins/recharge`,
+  //       null,
+  //       {
+  //         params: { amount_taka: numAmount },
+  //         headers: { Authorization: `Bearer ${token}` }
+  //       }
+  //     );
       
-      // updateCoins(response.data.new_balance);
-      await fetchUserCoins(); // ✅ This refreshes coins from the server
-      setMessage(`✅ Successfully recharged ${response.data.coins_received || numAmount * 2} coins!`);
-      fetchTransactions();
+  //     // updateCoins(response.data.new_balance);
+  //     await fetchUserCoins(); // ✅ This refreshes coins from the server
+  //     setMessage(`✅ Successfully recharged ${response.data.coins_received || numAmount * 2} coins!`);
+  //     fetchTransactions();
       
-      setTimeout(() => setMessage(""), 5000);
-    } catch (err) {
-      setMessage(`❌ Recharge failed: ${err.response?.data?.detail || err.message}`);
-      setTimeout(() => setMessage(""), 5000);
-    } finally {
-      setLoading(false);
-    }
-  };
+  //     setTimeout(() => setMessage(""), 5000);
+  //   } catch (err) {
+  //     setMessage(`❌ Recharge failed: ${err.response?.data?.detail || err.message}`);
+  //     setTimeout(() => setMessage(""), 5000);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   // Copy to clipboard
   const copyToClipboard = (text) => {
@@ -346,8 +346,8 @@ const Profile = () => {
             textAlign: 'center'
           }}>
             <button
-              onClick={handleRecharge}
-              disabled={loading}
+              to="/price"
+              
               style={{
                 width: '100%',
                 padding: '12px',
