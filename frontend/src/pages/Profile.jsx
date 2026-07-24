@@ -337,7 +337,7 @@ const Profile = () => {
             </div>
           </div>
 
-          <div style={{
+          {/* <div style={{
             backgroundColor: theme.cardBg,
             padding: '20px',
             borderRadius: '12px',
@@ -376,7 +376,7 @@ const Profile = () => {
                 {message}
               </div>
             )}
-          </div>
+          </div> */}
         </div>
 
         {/* Recent Transactions */}
