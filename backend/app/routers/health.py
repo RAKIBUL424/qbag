@@ -7,7 +7,7 @@ import shutil
 router = APIRouter(prefix="/health", tags=["Health"])
 
 
-@router.get("")
+@router.api_route("", methods=["GET","HEAD"])
 def health():
     status = {
         "status": "healthy",
