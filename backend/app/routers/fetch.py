@@ -348,7 +348,25 @@ async def get_courses(
 #-------------------------------->
 
 
-#-------------------------------->Freee
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#-------------------------------->Freee----> Home.jsx
 
 @router.get("/universities")
 async def get_universities(
@@ -364,88 +382,84 @@ async def get_universities(
     return [u[0] for u in universities]
 
 
-
-
-
-
-
-
-
-@router.get("/courses/{university}/{subject}")
+@router.get("/semesters/{university}/{subject}")
 async def get_courses(
     university: str,
     subject: str,
     db: Session = Depends(get_db)
 ):
-    courses = db.query(
-        distinct(Question.course)
+    semesters = db.query(
+        distinct(Question.semester)
     ).filter(
         Question.university == university,
         Question.subject == subject,
         Question.status == "approved"
-    ).order_by(
-        Question.course
-    ).all()
-
-    return [c[0] for c in courses]
-
-
-@router.get("/years/{university}/{subject}/{course}")
-async def get_year(
-    university: str,
-    subject: str,
-    course: str,
-    db: Session = Depends(get_db)
-):
-    years = db.query(distinct(Question.year)).filter(
-        Question.university == university,
-        Question.subject == subject,
-        Question.course == course
-    ).order_by(
-        Question.year
-    ).all()
-    print(years)
-    
-
-    return [y[0] for y in years]
-
-
-
-
-@router.get("/semesters/{university}/{subject}/{course}/{year}")
-async def get_semester(
-    university: str,
-    subject: str,
-    course: str,
-    year: int,
-    db: Session = Depends(get_db)
-):
-    semesters = db.query(distinct(Question.semester)).filter(
-        Question.university == university,
-        Question.subject == subject,
-        Question.course == course,
-        Question.year == year
     ).order_by(
         Question.semester
     ).all()
 
     return [s[0] for s in semesters]
 
-@router.get("/exam_types/{university}/{subject}/{course}/{year}/{semester}")
+
+@router.get("/courses/{university}/{subject}/{semester}")
+async def get_year(
+    university: str,
+    subject: str,
+    semester: str,
+    db: Session = Depends(get_db)
+):
+    courses = db.query(distinct(Question.course)).filter(
+        Question.university == university,
+        Question.subject == subject,
+        Question.semester == semester,
+        Question.status == "approved"
+    ).order_by(
+        Question.course
+    ).all()
+    
+    
+
+    return [c[0] for c in courses]
+
+
+
+
+@router.get("/year/{university}/{subject}/{semester}/{course}")
+async def get_semester(
+    university: str,
+    subject: str,
+    semester: str,
+    course: str,
+    db: Session = Depends(get_db)
+):
+    years = db.query(distinct(Question.year)).filter(
+        Question.university == university,
+        Question.subject == subject,
+        Question.semester == semester,
+        Question.course == course,
+        Question.status == "approved"
+    ).order_by(
+        Question.year
+    ).all()
+
+    return [y[0] for y in years]
+
+@router.get("/exam_types/{university}/{subject}/{semester}/{course}/{year}")
 async def get_exam_type(
     university: str,
     subject: str,
+    semester: str,
     course: str,
     year: int,
-    semester: str,
     db: Session = Depends(get_db)
 ):
     exam_types = db.query(distinct(Question.exam_type)).filter(
         Question.university == university,
         Question.subject == subject,
+        Question.semester == semester,
         Question.course == course,
         Question.year == year,
-        Question.semester == semester
+        Question.status == "approved"
     ).order_by(
         Question.exam_type
     ).all()

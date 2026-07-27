@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 
 const API_BASE = "/api";
+// const API_BASE = "http://127.0.0.1:8000";
 
 export default function QuestionSearch() {
   const [universities, setUniversities] = useState([]);
@@ -12,26 +13,14 @@ export default function QuestionSearch() {
   const [semesters, setSemesters] = useState([]);
   const [examTypes, setExamTypes] = useState([]);
 
-  const [selectedUniversity, setSelectedUniversity] =
-    useState("");
-
-  const [selectedSubject, setSelectedSubject] =
-    useState("");
-
-  const [selectedCourse, setSelectedCourse] =
-    useState("");
-
-  const [selectedYear, setSelectedYear] =
-    useState("");
-
-  const [selectedSemester, setSelectedSemester] =
-    useState("");
-
-  const [selectedExamType, setSelectedExamType] =
-    useState("");
+  const [selectedUniversity, setSelectedUniversity] = useState("");
+  const [selectedSubject, setSelectedSubject] = useState("");
+  const [selectedCourse, setSelectedCourse] = useState("");
+  const [selectedYear, setSelectedYear] = useState("");
+  const [selectedSemester, setSelectedSemester] = useState("");
+  const [selectedExamType, setSelectedExamType] = useState("");
 
   const [images, setImages] = useState([]);
-
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -40,26 +29,22 @@ export default function QuestionSearch() {
 
   const fetchUniversities = async () => {
     try {
-      const res = await axios.get(
-        `${API_BASE}/fetch/universities`
-      );
-
-      setUniversities(res.data);
+      const res = await axios.get(`${API_BASE}/fetch/universities`);
+      setUniversities(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error(err);
+      setUniversities([]);
     }
   };
 
   const handleUniversityChange = async (value) => {
     setSelectedUniversity(value);
-
     setSelectedSubject("");
     setSelectedCourse("");
     setSelectedYear("");
     setSelectedSemester("");
     setSelectedExamType("");
     
-
     setSubjects([]);
     setCourses([]);
     setYears([]);
@@ -67,22 +52,21 @@ export default function QuestionSearch() {
     setExamTypes([]);
     setImages([]);
 
+    if (!value) return;
+
     try {
       const res = await axios.get(
-        `${API_BASE}/fetch/subjects/${encodeURIComponent(
-          value
-        )}`
+        `${API_BASE}/fetch/subjects/${encodeURIComponent(value)}`
       );
-
-      setSubjects(res.data);
+      setSubjects(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error(err);
+      setSubjects([]);
     }
   };
 
   const handleSubjectChange = async (value) => {
     setSelectedSubject(value);
-
     setSelectedCourse("");
     setSelectedYear("");
     setSelectedSemester("");
@@ -94,122 +78,107 @@ export default function QuestionSearch() {
     setExamTypes([]);
     setImages([]);
 
-    try {
-      const res = await axios.get(
-        `${API_BASE}/fetch/courses/${encodeURIComponent(
-          selectedUniversity
-        )}/${encodeURIComponent(value)}`
-      );
-
-      setCourses(res.data);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const handleCourseChange = async (value) => {
-    setSelectedCourse(value);
-
-    setSelectedYear("");
-    setSelectedSemester("");
-    setSelectedExamType("");
-
-    setYears([]);
-    setSemesters([]);
-    setExamTypes([]);
-    setImages([]);
-    try{
-      const res = await axios.get(
-        `${API_BASE}/fetch/years/${encodeURIComponent(
-          selectedUniversity
-        )}/${encodeURIComponent(
-          selectedSubject
-        )}/${encodeURIComponent(value)}`
-      );
-      setYears(res.data);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const handleYearChange = async (value) => {
-    setSelectedYear(value);
-
-    setSelectedSemester("");
-    setSelectedExamType("");
-
-    setSemesters([]);
-    setExamTypes([]);
-    setImages([]);
+    if (!value || !selectedUniversity) return;
 
     try {
       const res = await axios.get(
-        `${API_BASE}/fetch/semesters/${encodeURIComponent(
-          selectedUniversity
-        )}/${encodeURIComponent(
-          selectedSubject
-        )}/${encodeURIComponent(selectedCourse
-        )}/${value}`
+        `${API_BASE}/fetch/semesters/${encodeURIComponent(selectedUniversity)}/${encodeURIComponent(value)}`
       );
-
-      setSemesters(res.data);
+      setSemesters(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error(err);
+      setSemesters([]);
     }
   };
 
   const handleSemesterChange = async (value) => {
     setSelectedSemester(value);
+    setSelectedCourse("");
+    setSelectedYear("");
+    setSelectedExamType("");
 
+    setCourses([]);
+    setYears([]);
+    setExamTypes([]);
+    setImages([]);
+
+    if (!value || !selectedUniversity || !selectedSubject) return;
+
+    try {
+      const res = await axios.get(
+        `${API_BASE}/fetch/courses/${encodeURIComponent(selectedUniversity)}/${encodeURIComponent(selectedSubject)}/${encodeURIComponent(value)}`
+      );
+      setCourses(Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      console.error(err);
+      setCourses([]);
+    }
+  };
+
+  const handleCourseChange = async (value) => {
+    setSelectedCourse(value);
+    setSelectedYear("");
+    setSelectedExamType("");
+
+    setYears([]);
+    setExamTypes([]);
+    setImages([]);
+
+    if (!value || !selectedUniversity || !selectedSubject || !selectedSemester) return;
+
+    try {
+      const res = await axios.get(
+        `${API_BASE}/fetch/year/${encodeURIComponent(selectedUniversity)}/${encodeURIComponent(selectedSubject)}/${encodeURIComponent(selectedSemester)}/${encodeURIComponent(value)}`
+      );
+      setYears(Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      console.error(err);
+      setYears([]);
+    }
+  };
+
+  const handleYearChange = async (value) => {
+    setSelectedYear(value);
     setSelectedExamType("");
     setExamTypes([]);
     setImages([]);
 
+    // ✅ FIXED: Correct order - university/subject/semester/course/year
+    if (!value || !selectedUniversity || !selectedSubject || !selectedSemester || !selectedCourse) return;
+
     try {
       const res = await axios.get(
-        `${API_BASE}/fetch/exam_types/${encodeURIComponent(
-          selectedUniversity
-        )}/${encodeURIComponent(
-          selectedSubject
-        )}/${encodeURIComponent(
-          selectedCourse
-        )}/${encodeURIComponent(
-          selectedYear
-        )}/${encodeURIComponent(
-          value
-        )}`
+        `${API_BASE}/fetch/exam_types/${encodeURIComponent(selectedUniversity)}/${encodeURIComponent(selectedSubject)}/${encodeURIComponent(selectedSemester)}/${encodeURIComponent(selectedCourse)}/${encodeURIComponent(value)}`
       );
-
-      setExamTypes(res.data);
+      setExamTypes(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error(err);
+      setExamTypes([]);
     }
   };
 
   const handleSearch = async () => {
+    if (!selectedUniversity || !selectedSubject || !selectedCourse || !selectedYear || !selectedSemester || !selectedExamType) {
+      alert("Please select all fields");
+      return;
+    }
+
     try {
       setLoading(true);
-
-      const res = await axios.get(
-        `${API_BASE}/fetch/question`,
-        {
-          params: {
-            university: selectedUniversity,
-            subject: selectedSubject,
-            course: selectedCourse,
-            year: selectedYear,
-            semester: selectedSemester,
-            exam_type: selectedExamType,
-          },
-        }
-      );
-
-      setImages(res.data.images);
+      const res = await axios.get(`${API_BASE}/fetch/question`, {
+        params: {
+          university: selectedUniversity,
+          subject: selectedSubject,
+          semester: selectedSemester,  // ✅ Match backend parameter name
+          course: selectedCourse,
+          year: selectedYear,
+          exam_type: selectedExamType,
+        },
+      });
+      setImages(res.data?.images || []);
     } catch (err) {
       console.error(err);
-
       setImages([]);
-
       alert("Question not found");
     } finally {
       setLoading(false);
@@ -227,19 +196,11 @@ export default function QuestionSearch() {
 
       <select
         value={selectedUniversity}
-        onChange={(e) =>
-          handleUniversityChange(e.target.value)
-        }
+        onChange={(e) => handleUniversityChange(e.target.value)}
       >
-        <option value="">
-          Select University
-        </option>
-
+        <option value="">Select University</option>
         {universities.map((uni) => (
-          <option
-            key={uni}
-            value={uni}
-          >
+          <option key={uni} value={uni}>
             {uni}
           </option>
         ))}
@@ -250,40 +211,44 @@ export default function QuestionSearch() {
 
       <select
         value={selectedSubject}
-        onChange={(e) =>
-          handleSubjectChange(e.target.value)
-        }
+        onChange={(e) => handleSubjectChange(e.target.value)}
+        disabled={!selectedUniversity}
       >
-        <option value="">
-          Select Subject
-        </option>
-
+        <option value="">Select Subject</option>
         {subjects.map((sub) => (
-          <option
-            key={sub}
-            value={sub}
-          >
+          <option key={sub} value={sub}>
             {sub}
           </option>
         ))}
       </select>
+
       <br />
       <br />
+
+      <select
+        value={selectedSemester}
+        onChange={(e) => handleSemesterChange(e.target.value)}
+        disabled={!selectedSubject}
+      >
+        <option value="">Select Semester</option>
+        {semesters.map((semester) => (
+          <option key={semester} value={semester}>
+            {semester}
+          </option>
+        ))}
+      </select>
+
+      <br />
+      <br />
+
       <select
         value={selectedCourse}
-        onChange={(e) =>
-          handleCourseChange(e.target.value)
-        }
+        onChange={(e) => handleCourseChange(e.target.value)}
+        disabled={!selectedSemester}
       >
-        <option value="">
-          Select Course
-        </option>
-
+        <option value="">Select Course</option>
         {courses.map((course) => (
-          <option
-            key={course}
-            value={course}
-          >
+          <option key={course} value={course}>
             {course}
           </option>
         ))}
@@ -294,19 +259,12 @@ export default function QuestionSearch() {
 
       <select
         value={selectedYear}
-        onChange={(e) =>
-          handleYearChange(e.target.value)
-        }
+        onChange={(e) => handleYearChange(e.target.value)}
+        disabled={!selectedCourse}
       >
-        <option value="">
-          Select Year
-        </option>
-
+        <option value="">Select Year</option>
         {years.map((year) => (
-          <option
-            key={year}
-            value={year}
-          >
+          <option key={year} value={year}>
             {year}
           </option>
         ))}
@@ -316,45 +274,13 @@ export default function QuestionSearch() {
       <br />
 
       <select
-        value={selectedSemester}
-        onChange={(e) =>
-          handleSemesterChange(e.target.value)
-        }
-      >
-        <option value="">
-          Select Semester
-        </option>
-
-        {semesters.map((semester) => (
-          <option
-            key={semester}
-            value={semester}
-          >
-            {semester}
-          </option>
-        ))}
-      </select>
-
-      <br />
-      <br />
-
-      <select
         value={selectedExamType}
-        onChange={(e) =>
-          setSelectedExamType(
-            e.target.value
-          )
-        }
+        onChange={(e) => setSelectedExamType(e.target.value)}
+        disabled={!selectedYear}
       >
-        <option value="">
-          Select Exam Type
-        </option>
-
+        <option value="">Select Exam Type</option>
         {examTypes.map((exam) => (
-          <option
-            key={exam}
-            value={exam}
-          >
+          <option key={exam} value={exam}>
             {exam}
           </option>
         ))}
@@ -368,17 +294,17 @@ export default function QuestionSearch() {
         disabled={
           !selectedUniversity ||
           !selectedSubject ||
+          !selectedCourse ||
           !selectedYear ||
           !selectedSemester ||
-          !selectedExamType
+          !selectedExamType ||
+          loading
         }
       >
-        Search Question
+        {loading ? "Searching..." : "Search Question"}
       </button>
 
-      {loading && (
-        <p>Loading questions...</p>
-      )}
+      {loading && <p>Loading questions...</p>}
 
       {images.length > 0 && (
         <div
@@ -386,10 +312,7 @@ export default function QuestionSearch() {
             marginTop: "30px",
           }}
         >
-          <h3>
-            Found {images.length} Pages
-          </h3>
-
+          <h3>Found {images.length} Pages</h3>
           {images.map((img) => (
             <div
               key={img.image_id}
@@ -404,6 +327,9 @@ export default function QuestionSearch() {
                   width: "100%",
                   border: "1px solid #ddd",
                   borderRadius: "8px",
+                }}
+                onError={(e) => {
+                  e.target.style.display = "none";
                 }}
               />
             </div>
