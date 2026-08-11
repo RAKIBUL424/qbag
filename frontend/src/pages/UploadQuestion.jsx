@@ -1,5 +1,5 @@
 
-
+import { Helmet } from "react-helmet-async";
 import { useEffect, useState, useRef } from "react";
 import axios from "axios";
 
@@ -340,6 +340,11 @@ export default function UploadQuestion() {
 
   // ---------------- UI ----------------
   return (
+    <>
+    <Helmet>
+      <title>Qbag - Questions Upload</title>
+    </Helmet>
+
     <div style={{ maxWidth: 850, margin: "20px auto", padding: "20px" }}>
       <h2>🚀 Upload Question System</h2>
 
@@ -734,5 +739,6 @@ export default function UploadQuestion() {
         Logout
       </button> */}
     </div>
+    </>
   );
 }

@@ -5,6 +5,7 @@ import axios from "axios";
 import CountdownTimer from "../components/CountdownTimer";
 
 import { Link } from "react-router";
+import { Helmet } from "react-helmet-async";
 
 const API_BASE = "/api";
 // const API_BASE = "http://127.0.0.1:8000";
@@ -91,6 +92,10 @@ const QuestionGrid = ({ questions, purchase, API_BASE, onRefresh }) => {
   }, [expandedImage]);
 
   return (
+    <>
+    <Helmet>
+      <title>Qbag - Premium Search</title>
+    </Helmet>
     <div style={{ marginTop: "30px" }}>
       {/* Purchase Details with Timer */}
       {purchase && (
@@ -500,6 +505,7 @@ const QuestionGrid = ({ questions, purchase, API_BASE, onRefresh }) => {
         }
       `}</style>
     </div>
+    </>
   );
 };
 

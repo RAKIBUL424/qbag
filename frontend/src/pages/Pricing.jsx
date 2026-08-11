@@ -1,5 +1,6 @@
 // Pricing.jsx
 import React, { useState, useEffect } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router';
 
 const Pricing = () => {
@@ -304,6 +305,10 @@ const Pricing = () => {
   };
 
   return (
+    <>
+    <Helmet>
+      <title>Qbag - Pricing</title>
+    </Helmet>
     <div style={styles.container}>
       <div style={styles.header}>
         <div style={styles.title}>💰 Coin Packages</div>
@@ -431,6 +436,7 @@ const Pricing = () => {
         <p>Coins valid for 20 days • Questions? Contact on Facebook</p>
       </div>
     </div>
+    </>
   );
 };
 

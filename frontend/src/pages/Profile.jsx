@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import axios from "axios";
 import { Link } from "react-router";
+import { Helmet } from "react-helmet-async";
 
 const API_BASE = "/api";
 
@@ -188,6 +189,12 @@ const Profile = () => {
   }
 
   return (
+    <>
+    <Helmet>
+      <title>Qbag - User Profile</title>
+    </Helmet>
+
+
     <div style={{
       minHeight: 'calc(100vh - 200px)',
       backgroundColor: theme.background,
@@ -723,6 +730,7 @@ const Profile = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 

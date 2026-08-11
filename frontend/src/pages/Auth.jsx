@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import axios from "axios";
 import { useAuth } from "../contexts/AuthContext";
+import { Helmet } from "react-helmet-async";
 
 const API_URL = "/api/user";
 
@@ -150,6 +151,10 @@ const Auth = () => {
   };
 
   return (
+    <>
+    <Helmet>
+      <title>Qbag - Register/Login</title>
+    </Helmet>
     <div style={{
       minHeight: 'calc(100vh - 80px)',
       display: 'flex',
@@ -754,6 +759,7 @@ const Auth = () => {
         `}
       </style>
     </div>
+    </>
   );
 };
 
