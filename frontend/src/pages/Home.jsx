@@ -1,6 +1,7 @@
 
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { Helmet } from 'react-helmet-async';
 
 const API_BASE = "/api";
 // const API_BASE = "http://127.0.0.1:8000";
@@ -186,6 +187,12 @@ export default function QuestionSearch() {
   };
 
   return (
+    
+    
+    <>
+    <Helmet>
+      <title>Qbag - Find Question</title>
+    </Helmet>
     <div
       style={{
         maxWidth: "900px",
@@ -337,5 +344,6 @@ export default function QuestionSearch() {
         </div>
       )}
     </div>
+    </>
   );
 }

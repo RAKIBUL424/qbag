@@ -16,7 +16,7 @@ const FloatingScreenshotButton = () => {
     console.log(`Text extracted: ${text.substring(0, 50)}... (${coins} coins spent)`);
     setTimeout(() => {
       setIsOpen(false);
-    }, 10000);
+    }, 30000);
   };
 
   // Don't render anything if not on allowed pages
