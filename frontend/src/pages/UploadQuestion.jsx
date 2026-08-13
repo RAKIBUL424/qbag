@@ -357,6 +357,8 @@ export default function UploadQuestion() {
         fontSize: "12px",
         border: canUpload ? "1px solid #c3e6cb" : "1px solid #f5c6cb"
       }}>
+        <strong>Reward Info: You will earn 15 coins for final question, 10 coins for midterm questions and 5 coins for quiz question upload. These coins will be valid for next 365 days. You can claim money instade of coins but this feature will implemented later in the future.</strong>
+        <br />
         <strong>Status:</strong> {canUpload ? "✅ All fields filled - Ready to upload" : "❌ Please fill all fields"} 
         <br />
         <strong>Values:</strong> Uni: "{selectedUniversity || "empty"}" | 
@@ -407,7 +409,7 @@ export default function UploadQuestion() {
 
       {/* SUBJECT */}
       <div style={{ marginBottom: "15px" }}>
-        <label>Subject:</label>
+        <label>Subject / Department:</label>
         <div style={{ display: "flex", gap: "8px" }}>
           <select
             value={selectedSubject}
@@ -518,7 +520,7 @@ export default function UploadQuestion() {
 
       {/* SEMESTER */}
       <div style={{ marginBottom: "15px" }}>
-        <label>Semester:</label>
+        <label>Semester / Year:</label>
         <div style={{ display: "flex", gap: "8px" }}>
           <select
             value={selectedSemester}
