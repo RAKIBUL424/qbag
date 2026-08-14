@@ -834,7 +834,9 @@ export default function PremiumSearch() {
 
   return (
     <>
-    <Helmet>Qbag - Premium Search</Helmet>
+    <Helmet>
+      <title>Qbag - Premium Search</title>
+    </Helmet>
 
     <div style={{ maxWidth: "1200px", margin: "20px auto", padding: "20px" }}>
       <h2>⭐ Premium Search</h2>
