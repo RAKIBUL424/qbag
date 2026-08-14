@@ -408,7 +408,7 @@ const Pricing = () => {
 
         <div style={styles.contactRow}>
           <a
-            href="https://www.facebook.com/ahmdrakibul.islam.5/"
+            href="https://www.facebook.com/profile.php?id=100079347506277"
             target="_blank"
             rel="noopener noreferrer"
             style={styles.facebookButton}
