@@ -93,9 +93,7 @@ const QuestionGrid = ({ questions, purchase, API_BASE, onRefresh }) => {
 
   return (
     <>
-    <Helmet>
-      <title>Qbag - Premium Search</title>
-    </Helmet>
+    
     <div style={{ marginTop: "30px" }}>
       {/* Purchase Details with Timer */}
       {purchase && (
@@ -835,6 +833,9 @@ export default function PremiumSearch() {
   const isSearchDisabled = !filters.university || !filters.subject || loading;
 
   return (
+    <>
+    <Helmet>Qbag - Premium Search</Helmet>
+
     <div style={{ maxWidth: "1200px", margin: "20px auto", padding: "20px" }}>
       <h2>⭐ Premium Search</h2>
 
@@ -1248,5 +1249,6 @@ export default function PremiumSearch() {
         </div>
       )}
     </div>
+    </>
   );
 }
