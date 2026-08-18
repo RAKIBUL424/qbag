@@ -368,41 +368,41 @@ const Pricing = () => {
 
         <div style={styles.paymentInfo}>
           <div style={styles.paymentItem}>
-            {/* <div style={styles.paymentLabel}>📱 bKash Number</div>
-            <div style={styles.paymentValue}>017XX-XXXXXX</div> */}
-            <div style={styles.paymentLabel}>Before Payment send message to the admin. If the admin is availabel or not.</div>
+            <div style={styles.paymentLabel}>📱 bKash Payment Process 1</div>
+            <div style={styles.paymentValue}>Click the package...</div>
+            <div style={styles.paymentLabel}>you want to purchase</div>
             {/* <div style={styles.paymentValue}>017XX-XXXXXX</div> */}
           </div>
           <div style={styles.paymentItem}>
-            {/* <div style={styles.paymentLabel}>💰 Reference</div>
-            <div style={styles.paymentValue}>Name + Package</div> */}
-            <div style={styles.paymentLabel}>Without getting response from the admin, we discurage to make payment.</div>
+            <div style={styles.paymentLabel}>💵 bKash Payment Process 2</div>
+            <div style={styles.paymentValue}>Make Payment</div>
+            <div style={styles.paymentLabel}>After redirection, refresh the page.</div>
             {/* <div style={styles.paymentValue}>017XX-XXXXXX</div> */}
           </div>
           <div style={styles.paymentItem}>
-            {/* <div style={styles.paymentLabel}>⏱️ Processing</div>
-            <div style={styles.paymentValue}>5-10 min</div> */}
-            <div style={styles.paymentLabel}>After getting response from the admin, you can make payment.</div>
-            <div style={styles.paymentValue}>5-10 min could take to process</div>
+            <div style={styles.paymentLabel}>⏱️ Processing and Enjoy 💰</div>
+            <div style={styles.paymentValue}>Few seconds - 5 min</div>
+            <div style={styles.paymentLabel}>It takes a few seconds to 5 minutes to process your payment.</div>
+            {/* <div style={styles.paymentValue}>It takes a few seconds to 5 minutes to process your payment.</div> */}
           </div>
         </div>
 
         <div style={styles.instructionBox}>
           <div style={styles.instructionStep}>
             <span style={styles.instructionNumber}>1</span>
-            <span>Send ৳20 (60 coins) or ৳50 (200 coins) to the bKash number</span>
+            <span>After sending ৳20 (60 coins) or ৳50 (200 coins) to the bKash number</span>
+          </div>
+          <div style={styles.instructionStep}>
+            <span style={styles.instructionNumber}>2</span>
+            <span>If coins are not added within 5-10 minutes, send transaction ID screenshot email and username to our Facebook ID given below</span>
           </div>
           {/* <div style={styles.instructionStep}>
             <span style={styles.instructionNumber}>2</span>
-            <span>Send transaction ID & email to our Facebook page</span>
+            <span>Send userID & screenshot of your transaction to our Facebook page</span>
           </div> */}
           <div style={styles.instructionStep}>
-            <span style={styles.instructionNumber}>2</span>
-            <span>Send userID & screenshot of your transaction to our Facebook page</span>
-          </div>
-          <div style={styles.instructionStep}>
             <span style={styles.instructionNumber}>3</span>
-            <span>Coins added within 5-10 minutes</span>
+            <span>Coins will be added within 5-10 minutes if the admin is available.</span>
           </div>
         </div>
 
