@@ -257,7 +257,7 @@ const Profile = () => {
                 📧 {user?.email || 'user@example.com'}
               </p>
               <p style={{ color: theme.textSecondary, fontSize: '14px' }}>
-                Member since {new Date().toLocaleDateString('en-US', { 
+                To Day is {new Date().toLocaleDateString('en-US', { 
                   year: 'numeric', 
                   month: 'long', 
                   day: 'numeric' 
