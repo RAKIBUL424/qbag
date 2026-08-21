@@ -80,7 +80,7 @@ const AdminPanel = () => {
   const fetchAllQuestions = useCallback(async () => {
     try {
       const res = await axios.get(
-        `${API_BASE}/${ADMIN_SECRET}/admin/questions?limit=100`,
+        `${API_BASE}/${ADMIN_SECRET}/admin/questions?limit=1000`,
         getAuthHeaders()
       );
       setAllQuestions(res.data.questions || []);
