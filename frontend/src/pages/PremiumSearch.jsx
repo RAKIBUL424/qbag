@@ -1033,7 +1033,7 @@ export default function PremiumSearch() {
                 backgroundColor: !filters.subject ? "#f5f5f5" : "white"
               }}
             >
-              <option value="">Course</option>
+              <option value=""> All Courses</option>
               {dropdownData.courses.map(c => (
                 <option key={c} value={c}>{c}</option>
               ))}
@@ -1044,7 +1044,7 @@ export default function PremiumSearch() {
               onChange={(e) => handleFilterChange('year', e.target.value)}
               style={{ padding: "8px", borderRadius: "4px", border: "1px solid #ddd" }}
             >
-              <option value="">Year</option>
+              <option value="">All Years</option>
               {dropdownData.years.map(y => (
                 <option key={y} value={y}>{y}</option>
               ))}
@@ -1055,7 +1055,7 @@ export default function PremiumSearch() {
               onChange={(e) => handleFilterChange('semester', e.target.value)}
               style={{ padding: "8px", borderRadius: "4px", border: "1px solid #ddd" }}
             >
-              <option value="">Semester</option>
+              <option value="">All Semesters</option>
               {dropdownData.semesters.map(s => (
                 <option key={s} value={s}>{s}</option>
               ))}
@@ -1066,7 +1066,7 @@ export default function PremiumSearch() {
               onChange={(e) => handleFilterChange('examType', e.target.value)}
               style={{ padding: "8px", borderRadius: "4px", border: "1px solid #ddd" }}
             >
-              <option value="">Exam Type</option>
+              <option value="">All Exam Types</option>
               {dropdownData.examTypes.map(e => (
                 <option key={e} value={e}>{e}</option>
               ))}
