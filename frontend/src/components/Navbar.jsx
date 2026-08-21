@@ -232,6 +232,7 @@ const Navbar = () => {
       <nav className="qbag-navbar">
         <Link to="/" style={{ textDecoration: 'none' }}>
           <div className="qbag-logo">QBag</div>
+          <p style={{ margin: 0, fontSize: '11px', color: 'var(--text)', fontFamily: 'Arial, sans-serif' }}>Your Academic Question Bank</p>
         </Link>
 
         <div className="qbag-links">
