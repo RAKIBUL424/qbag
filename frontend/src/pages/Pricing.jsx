@@ -316,7 +316,7 @@ const Pricing = () => {
           Choose your package and start searching!
         </p>
         <p style={styles.coinsNumber}>
-          The app is currently in development. Currently we are not automatically processing payments. If you need, you can contact the admin to purchase a package.
+          Heads up! The app is still in development, so we're not processing payments automatically yet. Need coins? Just ask our admin and we'll hook you up! Don't worry – it'll stay free until we get the payment gateway up and running.
         </p>
       </div>
 
