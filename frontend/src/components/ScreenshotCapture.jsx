@@ -1213,8 +1213,6 @@
 
 
 
-
-
 // components/ScreenshotCapture.jsx
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import axios from 'axios';
@@ -1238,20 +1236,18 @@ const ScreenshotCapture = ({ onClose, onTextExtracted }) => {
   
   const containerRef = useRef(null);
   const imageRef = useRef(null);
-
-  // NEW: Check if device is mobile
-  const isMobile = useCallback(() => {
-    return /Android|iPhone|iPad|iPod|BlackBerry|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
-  }, []);
-
+  
   // Get position relative to image with zoom correction
   const getPosition = useCallback((e) => {
     if (!imageRef.current) return { x: 0, y: 0 };
     
     const rect = imageRef.current.getBoundingClientRect();
+    
+    // Get the actual displayed size of the image
     const displayWidth = rect.width;
     const displayHeight = rect.height;
     
+    // Calculate position in the image's natural coordinates
     const x = ((e.clientX - rect.left) / displayWidth) * imageNaturalSize.width;
     const y = ((e.clientY - rect.top) / displayHeight) * imageNaturalSize.height;
     
@@ -1261,7 +1257,7 @@ const ScreenshotCapture = ({ onClose, onTextExtracted }) => {
     };
   }, [imageNaturalSize]);
 
-  // FIXED: Mobile-compatible screen capture
+  // Step 1: Capture the screen using native API with better quality
   const captureScreen = useCallback(async () => {
     try {
       setIsProcessing(true);
@@ -1270,43 +1266,38 @@ const ScreenshotCapture = ({ onClose, onTextExtracted }) => {
       setSelectedArea(null);
       setIsCapturing(true);
       
+      // Temporarily hide the overlay to avoid capturing it
       const overlay = containerRef.current;
       if (overlay) {
         overlay.style.opacity = '0';
         overlay.style.pointerEvents = 'none';
       }
       
+      // Wait for DOM update
       await new Promise(resolve => setTimeout(resolve, 200));
       
+      // Get the screen dimensions for optimal quality
       const screenWidth = window.screen.width * window.devicePixelRatio;
       const screenHeight = window.screen.height * window.devicePixelRatio;
       
-      // FIX: Better mobile support for getDisplayMedia
-      let stream;
-      try {
-        stream = await navigator.mediaDevices.getDisplayMedia({
-          video: {
-            displaySurface: 'monitor',
-            cursor: 'always',
-            width: { ideal: Math.max(1920, screenWidth) },
-            height: { ideal: Math.max(1080, screenHeight) },
-            frameRate: { ideal: 30 }
-          },
-          audio: false,
-          preferCurrentTab: false,
-        });
-      } catch (e) {
-        // FIX: For mobile, try with simplified constraints
-        console.log('Trying simplified constraints for mobile...');
-        stream = await navigator.mediaDevices.getDisplayMedia({
-          video: true,
-          audio: false,
-        });
-      }
+      // Use the Screen Capture API with higher quality settings
+      const stream = await navigator.mediaDevices.getDisplayMedia({
+        video: {
+          displaySurface: 'monitor',
+          cursor: 'always',
+          width: { ideal: Math.max(1920, screenWidth) },
+          height: { ideal: Math.max(1080, screenHeight) },
+          frameRate: { ideal: 30 }
+        },
+        audio: false,
+        preferCurrentTab: false,
+      });
       
+      // Create video element to capture frames
       const video = document.createElement('video');
       video.srcObject = stream;
       
+      // Wait for video to be ready
       await new Promise((resolve) => {
         video.onloadedmetadata = () => {
           video.play();
@@ -1314,25 +1305,33 @@ const ScreenshotCapture = ({ onClose, onTextExtracted }) => {
         };
       });
       
+      // Wait a moment for the video to be ready
       await new Promise(resolve => setTimeout(resolve, 500));
       
+      // Create canvas with the video dimensions (high quality)
       const canvas = document.createElement('canvas');
       canvas.width = video.videoWidth || screenWidth;
       canvas.height = video.videoHeight || screenHeight;
       const ctx = canvas.getContext('2d');
       
+      // Enable high-quality rendering
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
+      
+      // Draw the video frame to canvas
       ctx.drawImage(video, 0, 0);
       
+      // Stop all tracks
       stream.getTracks().forEach(track => track.stop());
       video.srcObject = null;
       
+      // Restore the overlay
       if (overlay) {
         overlay.style.opacity = '1';
         overlay.style.pointerEvents = 'auto';
       }
       
+      // Convert to data URL with high quality
       const imageData = canvas.toDataURL('image/png', 1.0);
       setCapturedImage(imageData);
       setImageNaturalSize({
@@ -1341,7 +1340,7 @@ const ScreenshotCapture = ({ onClose, onTextExtracted }) => {
       });
       setShowPreview(true);
       setIsCapturing(false);
-      setZoomLevel(1);
+      setZoomLevel(1); // Reset zoom when new image is captured
       
       console.log('✅ Screenshot captured:', canvas.width, 'x', canvas.height);
       
@@ -1349,16 +1348,14 @@ const ScreenshotCapture = ({ onClose, onTextExtracted }) => {
       console.error('Screen capture error:', err);
       setIsCapturing(false);
       
+      // Restore the overlay
       const overlay = containerRef.current;
       if (overlay) {
         overlay.style.opacity = '1';
         overlay.style.pointerEvents = 'auto';
       }
       
-      // FIX: Better error message for mobile
-      if (isMobile()) {
-        setError('Screen capture not supported on mobile. Please use the "Upload Screenshot" option below.');
-      } else if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
         setError('Permission denied. Please allow screen sharing to capture the image.');
       } else if (err.name === 'AbortError' || err.message?.includes('aborted')) {
         setError('Screen capture was cancelled.');
@@ -1368,7 +1365,7 @@ const ScreenshotCapture = ({ onClose, onTextExtracted }) => {
     } finally {
       setIsProcessing(false);
     }
-  }, [isMobile]);
+  }, []);
 
   // Handle mouse events for selection on the captured image
   const handleMouseDown = useCallback((e) => {
@@ -1435,37 +1432,7 @@ const ScreenshotCapture = ({ onClose, onTextExtracted }) => {
     setZoomLevel(1);
   }, []);
 
-  // NEW: Mobile screenshot upload fallback
-  const handleMobileUpload = useCallback((e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const imageData = event.target.result;
-      setCapturedImage(imageData);
-      
-      const img = new Image();
-      img.onload = () => {
-        setImageNaturalSize({
-          width: img.naturalWidth,
-          height: img.naturalHeight
-        });
-      };
-      img.src = imageData;
-      
-      setShowPreview(true);
-      setError('');
-    };
-    reader.onerror = () => {
-      setError('Failed to read image file');
-    };
-    reader.readAsDataURL(file);
-    
-    e.target.value = '';
-  }, []);
-
-  // Get the display coordinates for the selection rectangle
+  // Get the display coordinates for the selection rectangle - FIXED FOR ZOOM
   const getDisplayRect = useCallback(() => {
     if (!selectedArea || !imageRef.current) return null;
     
@@ -1473,22 +1440,31 @@ const ScreenshotCapture = ({ onClose, onTextExtracted }) => {
     const displayWidth = rect.width;
     const displayHeight = rect.height;
     
+    // Calculate the scale from natural to display
     const scaleX = displayWidth / imageNaturalSize.width;
     const scaleY = displayHeight / imageNaturalSize.height;
     
+    // Apply zoom to the scale
     const zoomedScaleX = scaleX * zoomLevel;
     const zoomedScaleY = scaleY * zoomLevel;
     
+    // Get the container to calculate centering offsets
     const containerRect = imageRef.current.parentElement.getBoundingClientRect();
     const imageDisplayWidth = rect.width;
     const imageDisplayHeight = rect.height;
     
+    // Calculate the offset due to centering (the image is centered in the container)
     const offsetX = (containerRect.width - imageDisplayWidth) / 2;
     const offsetY = (containerRect.height - imageDisplayHeight) / 2;
     
+    // The image might be scaled down to fit the container, so we need to adjust
+    // The actual displayed size of the image in the container
     const actualDisplayWidth = imageDisplayWidth;
     const actualDisplayHeight = imageDisplayHeight;
     
+    // Calculate the position of the selection in display coordinates
+    // The selection coordinates are in image space, we need to convert to display space
+    // with the zoom factor applied and centering offset
     const left = (selectedArea.x * (actualDisplayWidth / imageNaturalSize.width)) + offsetX;
     const top = (selectedArea.y * (actualDisplayHeight / imageNaturalSize.height)) + offsetY;
     const width = selectedArea.width * (actualDisplayWidth / imageNaturalSize.width);
@@ -1506,6 +1482,13 @@ const ScreenshotCapture = ({ onClose, onTextExtracted }) => {
 
   // Step 3: Crop the image based on selection
   const cropImage = useCallback(async () => {
+    // Check if user is logged in first
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setError('⚠️ Please login first to extract text. Click the login button in the top right corner.');
+      return;
+    }
+
     if (!selectedArea || selectedArea.width < 10 || selectedArea.height < 10) {
       setError('Please select a valid area (minimum 10x10 pixels)');
       return;
@@ -1515,10 +1498,12 @@ const ScreenshotCapture = ({ onClose, onTextExtracted }) => {
       setIsProcessing(true);
       setError('');
       
+      // Load the captured image
       const img = new Image();
       img.src = capturedImage;
       await new Promise(resolve => img.onload = resolve);
       
+      // Use the selection coordinates directly (already in image coordinates)
       const x = Math.round(selectedArea.x);
       const y = Math.round(selectedArea.y);
       const width = Math.round(selectedArea.width);
@@ -1529,6 +1514,7 @@ const ScreenshotCapture = ({ onClose, onTextExtracted }) => {
         crop: `${x},${y} ${width}x${height}`
       });
       
+      // Create canvas for cropping
       const canvas = document.createElement('canvas');
       canvas.width = width;
       canvas.height = height;
@@ -1538,14 +1524,15 @@ const ScreenshotCapture = ({ onClose, onTextExtracted }) => {
       ctx.imageSmoothingQuality = 'high';
       ctx.drawImage(img, x, y, width, height, 0, 0, canvas.width, canvas.height);
       
+      // Convert to blob
       const blob = await new Promise(resolve => {
         canvas.toBlob(resolve, 'image/png', 1.0);
       });
       
+      // Send to backend
       const formData = new FormData();
       formData.append('file', blob, 'screenshot.png');
       
-      const token = localStorage.getItem('token');
       const response = await axios.post(
         `${API_BASE}/ocr/extract`,
         formData,
@@ -1566,6 +1553,7 @@ const ScreenshotCapture = ({ onClose, onTextExtracted }) => {
       if (response.data.success && trimmedText) {
         setExtractedText(trimmedText);
         
+        // Auto copy to clipboard
         try {
           await navigator.clipboard.writeText(trimmedText);
           console.log('✅ Text automatically copied to clipboard');
@@ -1587,10 +1575,36 @@ const ScreenshotCapture = ({ onClose, onTextExtracted }) => {
       
     } catch (err) {
       console.error('Crop error:', err);
-      if (err.response?.status === 402) {
-        setError('Insufficient coins! Required: 3 coins');
+      
+      // Handle authentication errors specifically
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        setError('⚠️ Your session has expired or you are not logged in. Please login again to continue.');
+        // Optionally redirect to login or trigger login modal
+        // onClose(); // Uncomment if you want to close the modal on auth error
+      } else if (err.response?.status === 402) {
+        setError('⚠️ Insufficient coins! You need 3 coins to extract text. Please purchase more coins.');
+      } else if (err.response?.status === 404) {
+        setError('⚠️ OCR service is temporarily unavailable. Please try again later.');
+      } else if (err.response?.status === 500) {
+        // Check if it's actually an auth issue disguised as 500
+        const errorData = err.response?.data;
+        if (errorData?.detail?.includes('token') || errorData?.detail?.includes('auth') || errorData?.detail?.includes('login')) {
+          setError('⚠️ Authentication error. Please login again.');
+        } else {
+          setError('⚠️ Server error occurred. Please try again later.');
+        }
+      } else if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
+        setError('⚠️ Request timed out. Please try again.');
+      } else if (err.response?.data?.detail) {
+        // Check if the detail contains authentication-related keywords
+        const detail = err.response.data.detail.toLowerCase();
+        if (detail.includes('token') || detail.includes('auth') || detail.includes('login') || detail.includes('credential')) {
+          setError('⚠️ Please login to extract text from screenshots.');
+        } else {
+          setError(err.response.data.detail);
+        }
       } else {
-        setError(err.response?.data?.detail || err.message || 'Failed to process image');
+        setError('Failed to process image: ' + (err.message || 'Unknown error'));
       }
     } finally {
       setIsProcessing(false);
@@ -1685,7 +1699,6 @@ const ScreenshotCapture = ({ onClose, onTextExtracted }) => {
             <p style={{ fontSize: '14px', color: '#888', marginBottom: '20px' }}>
               Choose the window or screen containing the text you want to extract
             </p>
-            
             <button 
               onClick={captureScreen}
               disabled={isProcessing || isCapturing}
@@ -1700,26 +1713,6 @@ const ScreenshotCapture = ({ onClose, onTextExtracted }) => {
                 '🎯 Capture Screen'
               )}
             </button>
-
-            {/* NEW: Mobile fallback - hidden file input with upload button */}
-            <div style={{ marginTop: '20px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '20px' }}>
-              <p style={{ fontSize: '13px', color: '#888', marginBottom: '10px' }}>
-                {isMobile() ? '📱 Mobile users: Upload a screenshot instead' : '📤 Or upload an existing image'}
-              </p>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleMobileUpload}
-                style={{ 
-                  display: 'block', 
-                  margin: '0 auto',
-                  color: 'white',
-                  maxWidth: '300px',
-                  fontSize: '14px'
-                }}
-              />
-            </div>
-
             {error && (
               <div className="error-message" style={{position: 'relative', bottom: 'auto', left: 'auto', transform: 'none'}}>
                 <span>❌ {error}</span>
@@ -1774,6 +1767,7 @@ const ScreenshotCapture = ({ onClose, onTextExtracted }) => {
                 }}
                 draggable={false}
                 onLoad={(e) => {
+                  // Store natural size when image loads
                   const img = e.target;
                   setImageNaturalSize({
                     width: img.naturalWidth,
@@ -1782,7 +1776,7 @@ const ScreenshotCapture = ({ onClose, onTextExtracted }) => {
                 }}
               />
               
-              {/* Selection rectangle */}
+              {/* Selection rectangle - using display coordinates */}
               {displayRect && displayRect.width > 0 && displayRect.height > 0 && (
                 <div
                   style={{
