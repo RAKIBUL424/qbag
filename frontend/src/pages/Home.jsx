@@ -323,7 +323,7 @@ export default function QuestionSearch() {
               marginTop: "30px",
             }}
           >
-            <h3>Found {images.length} Pages</h3>
+            {/* <h3>Found {images.length} Pages</h3> */}
             {/* {images.map((img) => (
             <div
               key={img.image_id}
@@ -345,7 +345,7 @@ export default function QuestionSearch() {
               />
             </div>
           ))} */}
-            {images.map((img, index) => (
+            {/* {images.map((img, index) => (
               <div key={img.image_id}>
                 <div style={{ marginBottom: "25px" }}>
                   <img
@@ -359,12 +359,48 @@ export default function QuestionSearch() {
                   />
                 </div>
 
-                {/* Ad after first page */}
+                
                 {index === 0 && (
                   <AdBanner placement="question_after_first_page" />
                 )}
               </div>
-            ))}
+            ))} */}
+
+            {images.length > 0 && (
+              <div
+                style={{
+                  marginTop: "30px",
+                }}
+              >
+                <h3>Found {images.length} Pages</h3>
+
+                {images.map((img, index) => (
+                  <div key={img.image_id}>
+                    <div style={{ marginBottom: "25px" }}>
+                      <img
+                        src={`${API_BASE}${img.image_url}`}
+                        alt={`Question page ${index + 1}`}
+                        style={{
+                          width: "100%",
+                          border: "1px solid #ddd",
+                          borderRadius: "8px",
+                        }}
+                      />
+                    </div>
+
+                    {/* Show ad AFTER each page except the last one (for multiple pages) */}
+                    {index < images.length - 1 && (
+                      <AdBanner placement={`question_between_pages_${index + 1}`} />
+                    )}
+
+                    {/* Show ad AFTER the last page only when there's exactly 1 page */}
+                    {index === images.length - 1 && images.length === 1 && (
+                      <AdBanner placement="question_single_page_bottom" />
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
 
           </div>
         )}
