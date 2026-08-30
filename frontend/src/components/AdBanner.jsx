@@ -1,27 +1,40 @@
 import { useEffect } from "react";
 
-export default function AdBanner({
-placement = "question_result",
-}) {
-useEffect(() => {
-console.log(`Ad loaded at: ${placement}`);
-}, [placement]);
+export default function AdBanner() {
+  useEffect(() => {
+    const script = document.createElement("script");
 
-return (
-<div
-style={{
-width: "100%",
-minHeight: "100px",
-margin: "25px 0",
-borderRadius: "8px",
-border: "1px dashed #ccc",
-display: "flex",
-alignItems: "center",
-justifyContent: "center",
-background: "#f8f8f8",
-color: "#777",
-}}
->
-Advertisement </div>
-);
+    script.async = true;
+    script.setAttribute("data-cfasync", "false");
+    script.src =
+      "https://pl31089864.profitableratecpmnetwork.com/ee013dcd506c4682e79beb89ec5789d0/invoke.js";
+
+    const container = document.getElementById(
+      "container-ee013dcd506c4682e79beb89ec5789d0"
+    );
+
+    if (container) {
+      container.innerHTML = "";
+      container.appendChild(script);
+    }
+
+    return () => {
+      if (container) {
+        container.innerHTML = "";
+      }
+    };
+  }, []);
+
+  return (
+    <div
+      style={{
+        width: "100%",
+        margin: "25px 0",
+        minHeight: "100px",
+        overflow: "hidden",
+      }}
+    >
+      <div id="container-ee013dcd506c4682e79beb89ec5789d0"></div>
+    </div>
+  );
 }
