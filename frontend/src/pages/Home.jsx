@@ -347,11 +347,7 @@ export default function QuestionSearch() {
           ))} */}
             {images.map((img, index) => (
               <div key={img.image_id}>
-                <div
-                  style={{
-                    marginBottom: "25px",
-                  }}
-                >
+                <div style={{ marginBottom: "25px" }}>
                   <img
                     src={`${API_BASE}${img.image_url}`}
                     alt={`Question page ${index + 1}`}
@@ -360,16 +356,12 @@ export default function QuestionSearch() {
                       border: "1px solid #ddd",
                       borderRadius: "8px",
                     }}
-                    onError={(e) => {
-                      e.target.style.display = "none";
-                    }}
                   />
                 </div>
 
-                {/* Show advertisement after the first page */}
-                {index === 0 && images.length > 1 && (
+                {/* Ad after first page */}
+                {index === 0 && (
                   <AdBanner placement="question_after_first_page" />
-                  
                 )}
               </div>
             ))}
