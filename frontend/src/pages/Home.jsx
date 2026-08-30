@@ -3,6 +3,9 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { Helmet } from 'react-helmet-async';
 
+import AdBanner from "./components/AdBanner";
+
+
 const API_BASE = "/api";
 // const API_BASE = "http://127.0.0.1:8000";
 
@@ -45,7 +48,7 @@ export default function QuestionSearch() {
     setSelectedYear("");
     setSelectedSemester("");
     setSelectedExamType("");
-    
+
     setSubjects([]);
     setCourses([]);
     setYears([]);
@@ -187,140 +190,140 @@ export default function QuestionSearch() {
   };
 
   return (
-    
-    
+
+
     <>
-    <Helmet>
-      <title>Qbag - Find Question</title>
-    </Helmet>
-    <div
-      style={{
-        maxWidth: "900px",
-        margin: "20px auto",
-      }}
-    >
-      <h2>Find Question</h2>
-
-      <select
-        value={selectedUniversity}
-        onChange={(e) => handleUniversityChange(e.target.value)}
+      <Helmet>
+        <title>Qbag - Find Question</title>
+      </Helmet>
+      <div
+        style={{
+          maxWidth: "900px",
+          margin: "20px auto",
+        }}
       >
-        <option value="">Select University</option>
-        {universities.map((uni) => (
-          <option key={uni} value={uni}>
-            {uni}
-          </option>
-        ))}
-      </select>
+        <h2>Find Question</h2>
 
-      <br />
-      <br />
-
-      <select
-        value={selectedSubject}
-        onChange={(e) => handleSubjectChange(e.target.value)}
-        disabled={!selectedUniversity}
-      >
-        <option value="">Select Subject</option>
-        {subjects.map((sub) => (
-          <option key={sub} value={sub}>
-            {sub}
-          </option>
-        ))}
-      </select>
-
-      <br />
-      <br />
-
-      <select
-        value={selectedSemester}
-        onChange={(e) => handleSemesterChange(e.target.value)}
-        disabled={!selectedSubject}
-      >
-        <option value="">Select Semester</option>
-        {semesters.map((semester) => (
-          <option key={semester} value={semester}>
-            {semester}
-          </option>
-        ))}
-      </select>
-
-      <br />
-      <br />
-
-      <select
-        value={selectedCourse}
-        onChange={(e) => handleCourseChange(e.target.value)}
-        disabled={!selectedSemester}
-      >
-        <option value="">Select Course</option>
-        {courses.map((course) => (
-          <option key={course} value={course}>
-            {course}
-          </option>
-        ))}
-      </select>
-
-      <br />
-      <br />
-
-      <select
-        value={selectedYear}
-        onChange={(e) => handleYearChange(e.target.value)}
-        disabled={!selectedCourse}
-      >
-        <option value="">Select Year</option>
-        {years.map((year) => (
-          <option key={year} value={year}>
-            {year}
-          </option>
-        ))}
-      </select>
-
-      <br />
-      <br />
-
-      <select
-        value={selectedExamType}
-        onChange={(e) => setSelectedExamType(e.target.value)}
-        disabled={!selectedYear}
-      >
-        <option value="">Select Exam Type</option>
-        {examTypes.map((exam) => (
-          <option key={exam} value={exam}>
-            {exam}
-          </option>
-        ))}
-      </select>
-
-      <br />
-      <br />
-
-      <button
-        onClick={handleSearch}
-        disabled={
-          !selectedUniversity ||
-          !selectedSubject ||
-          !selectedCourse ||
-          !selectedYear ||
-          !selectedSemester ||
-          !selectedExamType ||
-          loading
-        }
-      >
-        {loading ? "Searching..." : "Search Question"}
-      </button>
-
-      {loading && <p>Loading questions...</p>}
-
-      {images.length > 0 && (
-        <div
-          style={{
-            marginTop: "30px",
-          }}
+        <select
+          value={selectedUniversity}
+          onChange={(e) => handleUniversityChange(e.target.value)}
         >
-          <h3>Found {images.length} Pages</h3>
-          {images.map((img) => (
+          <option value="">Select University</option>
+          {universities.map((uni) => (
+            <option key={uni} value={uni}>
+              {uni}
+            </option>
+          ))}
+        </select>
+
+        <br />
+        <br />
+
+        <select
+          value={selectedSubject}
+          onChange={(e) => handleSubjectChange(e.target.value)}
+          disabled={!selectedUniversity}
+        >
+          <option value="">Select Subject</option>
+          {subjects.map((sub) => (
+            <option key={sub} value={sub}>
+              {sub}
+            </option>
+          ))}
+        </select>
+
+        <br />
+        <br />
+
+        <select
+          value={selectedSemester}
+          onChange={(e) => handleSemesterChange(e.target.value)}
+          disabled={!selectedSubject}
+        >
+          <option value="">Select Semester</option>
+          {semesters.map((semester) => (
+            <option key={semester} value={semester}>
+              {semester}
+            </option>
+          ))}
+        </select>
+
+        <br />
+        <br />
+
+        <select
+          value={selectedCourse}
+          onChange={(e) => handleCourseChange(e.target.value)}
+          disabled={!selectedSemester}
+        >
+          <option value="">Select Course</option>
+          {courses.map((course) => (
+            <option key={course} value={course}>
+              {course}
+            </option>
+          ))}
+        </select>
+
+        <br />
+        <br />
+
+        <select
+          value={selectedYear}
+          onChange={(e) => handleYearChange(e.target.value)}
+          disabled={!selectedCourse}
+        >
+          <option value="">Select Year</option>
+          {years.map((year) => (
+            <option key={year} value={year}>
+              {year}
+            </option>
+          ))}
+        </select>
+
+        <br />
+        <br />
+
+        <select
+          value={selectedExamType}
+          onChange={(e) => setSelectedExamType(e.target.value)}
+          disabled={!selectedYear}
+        >
+          <option value="">Select Exam Type</option>
+          {examTypes.map((exam) => (
+            <option key={exam} value={exam}>
+              {exam}
+            </option>
+          ))}
+        </select>
+
+        <br />
+        <br />
+
+        <button
+          onClick={handleSearch}
+          disabled={
+            !selectedUniversity ||
+            !selectedSubject ||
+            !selectedCourse ||
+            !selectedYear ||
+            !selectedSemester ||
+            !selectedExamType ||
+            loading
+          }
+        >
+          {loading ? "Searching..." : "Search Question"}
+        </button>
+
+        {loading && <p>Loading questions...</p>}
+
+        {images.length > 0 && (
+          <div
+            style={{
+              marginTop: "30px",
+            }}
+          >
+            <h3>Found {images.length} Pages</h3>
+            {/* {images.map((img) => (
             <div
               key={img.image_id}
               style={{
@@ -340,10 +343,38 @@ export default function QuestionSearch() {
                 }}
               />
             </div>
-          ))}
-        </div>
-      )}
-    </div>
+          ))} */}
+            {images.map((img, index) => (
+              <div key={img.image_id}>
+                <div
+                  style={{
+                    marginBottom: "25px",
+                  }}
+                >
+                  <img
+                    src={`${API_BASE}${img.image_url}`}
+                    alt={`Question page ${index + 1}`}
+                    style={{
+                      width: "100%",
+                      border: "1px solid #ddd",
+                      borderRadius: "8px",
+                    }}
+                    onError={(e) => {
+                      e.target.style.display = "none";
+                    }}
+                  />
+                </div>
+
+                {/* Show advertisement after the first page */}
+                {index === 0 && images.length > 1 && (
+                  <AdBanner placement="question_after_first_page" />
+                )}
+              </div>
+            ))}
+
+          </div>
+        )}
+      </div>
     </>
   );
 }
