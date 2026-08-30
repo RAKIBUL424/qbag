@@ -359,7 +359,7 @@
 //                   />
 //                 </div>
 
-                
+
 //                 {index === 0 && (
 //                   <AdBanner placement="question_after_first_page" />
 //                 )}
@@ -731,7 +731,7 @@ export default function QuestionSearch() {
           >
             <h3>Found {images.length} Pages</h3>
 
-            {images.map((img, index) => {
+            {/* {images.map((img, index) => {
               const isLast = index === images.length - 1;
               const isMultiplePages = images.length > 1;
 
@@ -752,7 +752,7 @@ export default function QuestionSearch() {
                     />
                   </div>
 
-                  {/* Show ad BETWEEN pages (for multiple pages) */}
+                  
                   {isMultiplePages && !isLast && (
                     <AdBanner 
                       adSlot="2306302936"
@@ -761,13 +761,64 @@ export default function QuestionSearch() {
                     />
                   )}
 
-                  {/* Show ad AFTER the page (for single page) */}
+                  
                   {!isMultiplePages && isLast && (
                     <AdBanner 
                       adSlot="2306302936"
                       layoutKey="-fb+5w+4e-db+86"
                       placement="question_single_page_bottom" 
                     />
+                  )}
+                </div>
+              );
+            })} */}
+            {images.map((img, index) => {
+              const isLast = index === images.length - 1;
+              const isMultiplePages = images.length > 1;
+
+              return (
+                <div key={img.image_id}>
+                  <div style={{ marginBottom: "25px" }}>
+                    <img
+                      src={`${API_BASE}${img.image_url}`}
+                      alt={`Question page ${index + 1}`}
+                      style={{
+                        width: "100%",
+                        border: "1px solid #ddd",
+                        borderRadius: "8px",
+                      }}
+                    />
+                  </div>
+
+                  {/* Smaller Ad BETWEEN pages (for multiple pages) */}
+                  {isMultiplePages && !isLast && (
+                    <div style={{
+                      maxWidth: "728px",  // Limit width for between ads
+                      margin: "15px auto",
+                      minHeight: "90px",
+                      backgroundColor: "#f5f5f5", // Light background for visibility
+                      borderRadius: "8px",
+                      overflow: "hidden",
+                    }}>
+                      <AdBanner
+                        adSlot="2306302936"
+                        layoutKey="-fb+5w+4e-db+86"
+                        placement={`question_between_pages_${index + 1}`}
+                        isBetween={true}
+                      />
+                    </div>
+                  )}
+
+                  {/* Full-width Ad AFTER the last page */}
+                  {isLast && (
+                    <div style={{ marginTop: "20px" }}>
+                      <AdBanner
+                        adSlot="2306302936"
+                        layoutKey="-fb+5w+4e-db+86"
+                        placement="question_after_last_page"
+                        isBetween={false}
+                      />
+                    </div>
                   )}
                 </div>
               );
