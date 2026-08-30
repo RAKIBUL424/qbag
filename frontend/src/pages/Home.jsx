@@ -2,8 +2,9 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { Helmet } from 'react-helmet-async';
+import AdBanner from "../components/AdBanner";
 
-import AdBanner from "./components/AdBanner";
+
 
 
 const API_BASE = "/api";
@@ -368,6 +369,7 @@ export default function QuestionSearch() {
                 {/* Show advertisement after the first page */}
                 {index === 0 && images.length > 1 && (
                   <AdBanner placement="question_after_first_page" />
+                  
                 )}
               </div>
             ))}
