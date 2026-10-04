@@ -1,2 +1,3 @@
 backend/.env
 backend/questions.db
+backend/env
