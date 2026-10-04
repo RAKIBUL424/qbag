@@ -1,3 +1,32 @@
+# Secrets & local config
 backend/.env
+backend/.env.*
+!.env.example
+frontend/.env.local
+frontend/.env.*.local
+
+# Python virtualenv
+backend/env/
+backend/venv/
+backend/.venv/
+env/
+venv/
+
+# SQLite database
 backend/questions.db
-backend/env
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Node
+node_modules/
+dist/
+build/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+
